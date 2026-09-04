@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/Providers';
 import { cn } from '../../lib/cn';
+import { useStorageStatus } from '../../hooks/useStorageStatus';
 
 interface NavEntry {
   to: string;
@@ -81,6 +82,7 @@ export default function AdminLayout() {
     const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { isInMemory } = useStorageStatus();
 
   useEffect(() => {
     setMobileOpen(false);
@@ -136,6 +138,11 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-surface text-foreground">
+      {isInMemory && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center text-sm text-amber-600 dark:text-amber-400">
+          ⚠️ <strong>Demo Mode</strong> — Changes will NOT persist. Add MONGODB_URI environment variable to Vercel to save data permanently.
+        </div>
+      )}
       <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur">
         <button
           type="button"

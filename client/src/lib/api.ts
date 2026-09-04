@@ -94,6 +94,10 @@ class ApiClient {
     else localStorage.removeItem('auth_token');
   }
 
+  async healthCheck(): Promise<{ status: string; storage: string; database: string }> {
+    return this.request<{ status: string; storage: string; database: string }>('/health');
+  }
+
   /* ---------------- Auth ---------------- */
 
   async login(email: string, password: string): Promise<AuthSuccess> {
