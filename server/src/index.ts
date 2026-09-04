@@ -117,8 +117,15 @@ for (const [name, schema] of Object.entries(resourceSchemas)) {
 }
 
 // Uploaded media (public read)
-const uploadsDir = path.isAbsolute(env.UPLOAD_DIR) ? env.UPLOAD_DIR : path.join(process.cwd(), env.UPLOAD_DIR);
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+const uploadsDir = isVercel
+  ? path.join('/tmp', 'uploads')
+  : path.isAbsolute(env.UPLOAD_DIR)
+    ? env.UPLOAD_DIR
+    : path.join(process.cwd(), env.UPLOAD_DIR);
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 const bundledCv = path.join(__dirname, '../public/cv/Dipesh-Thapa-CV.pdf');
 const bundledCvTarget = path.join(uploadsDir, 'Dipesh-Thapa-CV.pdf');
 if (fs.existsSync(bundledCv) && !fs.existsSync(bundledCvTarget)) {
