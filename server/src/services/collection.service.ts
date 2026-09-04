@@ -82,11 +82,27 @@ export const listAllRecords = async (config: ResourceConfig): Promise<Doc[]> => 
 
 export const getRecordById = async (config: ResourceConfig, id: string): Promise<Doc> => {
   const doc = (await collection(config).findOne({ _id: id })) as Doc | null;
-  if (doc && doc.visibility !== false) return doc;
+  if (doc && isPubliclyVisible(config, doc)) return doc;
   // Fallback: blog posts are addressed by slug rather than _id.
   const bySlug = (await collection(config).findOne({ slug: id })) as Doc | null;
-  if (bySlug && bySlug.visibility !== false) return bySlug;
+  if (bySlug && isPubliclyVisible(config, bySlug)) return bySlug;
   throw notFound(`${config.name} record not found`);
+};
+
+/**
+ * A record is publicly visible when:
+ * - It has no visibility flag, or visibility is true, AND
+ * - For blog posts, its status is 'published' (not draft/hidden/archived).
+ * Resources hidden via the admin "hide" toggle (visibility=false) or via
+ * blog status (draft/hidden/archived) must NOT be accessible publicly.
+ */
+const isPubliclyVisible = (config: ResourceConfig, doc: Doc): boolean => {
+  if (doc.visibility === false) return false;
+  if (config.name === 'blog') {
+    const status = doc.status;
+    if (status && status !== 'published') return false;
+  }
+  return true;
 };
 
 export const createRecord = async (config: ResourceConfig, payload: unknown): Promise<Doc> => {

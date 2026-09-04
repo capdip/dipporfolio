@@ -15,6 +15,57 @@ import {
   Skeleton,
 } from '../components/ui/primitives';
 
+function renderInlineMarkdown(text: string): ReactNode[] {
+  // Process inline markdown: bold, italic, strikethrough, code, links, images
+  const nodes: ReactNode[] = [];
+  // Regex to match inline elements in order of priority
+  const regex = /(`[^`]+`|\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\[([^\]]+)\]\(([^)]+)\)|!\[([^\]]*)\]\(([^)]+)\))/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let keyCounter = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    const [fullMatch, , linkText, linkUrl, imgAlt, imgSrc] = match;
+
+    if (fullMatch.startsWith('`')) {
+      // Inline code
+      nodes.push(<code key={`c-${keyCounter++}`} className="rounded bg-elevated px-1.5 py-0.5 font-mono text-sm">{fullMatch.slice(1, -1)}</code>);
+    } else if (fullMatch.startsWith('***')) {
+      // Bold + italic
+      nodes.push(<em key={`ei-${keyCounter++}`} className="font-bold italic">{fullMatch.slice(3, -3)}</em>);
+    } else if (fullMatch.startsWith('**')) {
+      // Bold
+      nodes.push(<strong key={`b-${keyCounter++}`} className="font-bold">{fullMatch.slice(2, -2)}</strong>);
+    } else if (fullMatch.startsWith('*')) {
+      // Italic
+      nodes.push(<em key={`i-${keyCounter++}`}>{fullMatch.slice(1, -1)}</em>);
+    } else if (fullMatch.startsWith('~~')) {
+      // Strikethrough
+      nodes.push(<del key={`s-${keyCounter++}`} className="line-through opacity-70">{fullMatch.slice(2, -2)}</del>);
+    } else if (fullMatch.startsWith('![')) {
+      // Image
+      nodes.push(<img key={`im-${keyCounter++}`} src={imgSrc} alt={imgAlt || ''} className="my-4 max-h-80 w-full rounded-xl border border-border object-contain" loading="lazy" />);
+    } else if (fullMatch.startsWith('[')) {
+      // Link
+      nodes.push(<a key={`a-${keyCounter++}`} href={linkUrl} target="_blank" rel="noreferrer noopener" className="font-medium text-primary underline-offset-4 hover:underline">{linkText}</a>);
+    }
+
+    lastIndex = match.index + fullMatch.length;
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
 function renderContent(content: string): ReactNode[] {
   return content
     .split(/\n{2,}/)
@@ -22,22 +73,44 @@ function renderContent(content: string): ReactNode[] {
     .filter(Boolean)
     .map((block, index) => {
       if (block.startsWith('### ')) {
-        return <h3 key={index}>{block.replace(/^###\s+/, '')}</h3>;
+        return <h3 key={index}>{renderInlineMarkdown(block.replace(/^###\s+/, ''))}</h3>;
       }
       if (block.startsWith('## ')) {
-        return <h2 key={index}>{block.replace(/^##\s+/, '')}</h2>;
+        return <h2 key={index}>{renderInlineMarkdown(block.replace(/^##\s+/, ''))}</h2>;
       }
       const lines = block.split('\n').map((line) => line.trim());
       if (lines.length > 0 && lines.every((line) => line.startsWith('- '))) {
         return (
-          <ul key={index}>
+          <ul key={index} className="list-disc space-y-1 pl-5">
             {lines.map((line, i) => (
-              <li key={i}>{line.slice(2)}</li>
+              <li key={i}>{renderInlineMarkdown(line.slice(2))}</li>
             ))}
           </ul>
         );
       }
-      return <p key={index}>{block}</p>;
+      // Handle ordered lists (1. 2. 3.)
+      if (lines.length > 0 && lines.every((line) => /^\d+\.\s+/.test(line))) {
+        return (
+          <ol key={index} className="list-decimal space-y-1 pl-5">
+            {lines.map((line, i) => (
+              <li key={i}>{renderInlineMarkdown(line.replace(/^\d+\.\s+/, ''))}</li>
+            ))}
+          </ol>
+        );
+      }
+      // Handle blockquotes
+      if (block.startsWith('> ')) {
+        return (
+          <blockquote key={index} className="my-4 border-l-4 border-primary/40 bg-elevated/50 px-4 py-3 text-muted italic">
+            {renderInlineMarkdown(block.replace(/^>\s+/, ''))}
+          </blockquote>
+        );
+      }
+      // Handle horizontal rules
+      if (block === '---' || block === '***' || block === '___') {
+        return <hr key={index} className="my-8 border-border" />;
+      }
+      return <p key={index}>{renderInlineMarkdown(block)}</p>;
     });
 }
 
@@ -138,6 +211,17 @@ export default function BlogPostPage() {
               loading="lazy"
               className="max-h-[480px] w-full rounded-2xl border border-border object-cover shadow-lg"
             />
+          </div>
+        ) : null}
+        {post.featuredImage && post.featuredImage !== post.coverImage ? (
+          <div className="container-site mt-6">
+            <img
+              src={resolveImageUrl(post.featuredImage)}
+              alt={`${post.title} - featured`}
+              loading="lazy"
+              className="max-h-[360px] w-full rounded-2xl border border-border object-cover shadow-md"
+            />
+            <p className="mt-1 text-center text-xs text-faint">Featured image</p>
           </div>
         ) : null}
         <Section ariaLabel="Post content">

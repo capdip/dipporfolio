@@ -1,6 +1,7 @@
 import type { Experience } from '../../../../shared/types';
 import { formatDateRange } from '../../lib/format';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -41,15 +42,32 @@ export default function ExperienceSection() {
               <Reveal delay={index * 0.05}>
                 <article className="panel p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-heading text-lg font-semibold text-foreground">
-                        {item.position}
-                      </h3>
-                      <p className="text-sm font-medium text-primary">{item.organization}</p>
-                      {item.location ? <p className="text-xs text-faint">{item.location}</p> : null}
+                    <div className="flex items-start gap-3">
+                      {item.logo ? (
+                        <img
+                          src={resolveImageUrl(item.logo)}
+                          alt={`${item.organization} logo`}
+                          className="h-10 w-10 shrink-0 rounded-lg border border-border object-cover"
+                        />
+                      ) : null}
+                      <div>
+                        <h3 className="font-heading text-lg font-semibold text-foreground">
+                          {item.position}
+                        </h3>
+                        <p className="text-sm font-medium text-primary">{item.organization}</p>
+                        {item.location ? <p className="text-xs text-faint">{item.location}</p> : null}
+                      </div>
                     </div>
                     <Badge tone="primary">{formatDateRange(item.startDate, item.endDate)}</Badge>
                   </div>
+                  {item.image ? (
+                    <img
+                      src={resolveImageUrl(item.image)}
+                      alt={`${item.position} at ${item.organization}`}
+                      className="mt-3 h-32 w-full rounded-lg border border-border object-cover"
+                      loading="lazy"
+                    />
+                  ) : null}
                   {item.description ? (
                     <p className="mt-3 text-sm leading-relaxed text-muted">{item.description}</p>
                   ) : null}
@@ -59,6 +77,18 @@ export default function ExperienceSection() {
                         <li key={i}>{responsibility}</li>
                       ))}
                     </ul>
+                  ) : null}
+                  {item.achievements && item.achievements.length > 0 ? (
+                    <div className="mt-4">
+                      <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-faint">
+                        Key Achievements
+                      </h4>
+                      <ul className="list-disc space-y-1 pl-5 text-sm text-muted">
+                        {item.achievements.map((achievement, i) => (
+                          <li key={i}>{achievement}</li>
+                        ))}
+                      </ul>
+                    </div>
                   ) : null}
                   {item.relatedSkills && item.relatedSkills.length > 0 ? (
                     <div className="mt-4 flex flex-wrap gap-1.5">
