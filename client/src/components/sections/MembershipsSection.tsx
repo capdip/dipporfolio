@@ -1,5 +1,6 @@
 import type { Membership } from '../../../../shared/types';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -34,7 +35,7 @@ export default function MembershipsSection() {
               <article className="panel flex h-full flex-col items-start gap-2 p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
                 {item.logo ? (
                   <img
-                    src={item.logo}
+                    src={resolveImageUrl(item.logo)}
                     alt={`${item.organization} logo`}
                     loading="lazy"
                     className="h-12 w-12 rounded-lg object-contain"

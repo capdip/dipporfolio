@@ -1,6 +1,7 @@
 import type { Internship } from '../../../../shared/types';
 import { formatDateRange } from '../../lib/format';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -35,7 +36,7 @@ export default function InternshipsSection() {
               <article className="panel h-full p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
                 {item.images && item.images.length > 0 ? (
                   <img
-                    src={item.images[0]}
+                    src={resolveImageUrl(item.images[0])}
                     alt={`${item.organization} internship`}
                     loading="lazy"
                     className="mb-4 h-40 w-full rounded-xl object-cover"

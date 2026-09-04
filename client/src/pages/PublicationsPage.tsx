@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Publication } from '../../../shared/types';
 import { useResource } from '../hooks/useContent';
+import { resolveImageUrl } from '../lib/resolveImageUrl';
 import { Badge, CardSkeleton, EmptyState, ErrorState, Reveal, Section, SectionHeading } from '../components/ui/primitives';
 
 const typeColors: Record<string, string> = {
@@ -48,7 +49,7 @@ export default function PublicationsPage() {
                   {pub.coverImage ? (
                     <div className="relative aspect-[16/9] w-full overflow-hidden bg-elevated">
                       <img
-                        src={pub.coverImage}
+                        src={resolveImageUrl(pub.coverImage)}
                         alt={`Cover of ${pub.title}`}
                         loading="lazy"
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-105"

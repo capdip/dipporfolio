@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../lib/api';
 import { keys, useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import type { BlogPost, MediaItem } from '../../../../shared/types';
 import { EmptyState, ErrorState, Skeleton } from '../ui/primitives';
 import {
@@ -245,7 +246,7 @@ export default function BlogEditor() {
           {posts.map((post) => (
             <li key={post._id} className="panel flex items-center gap-3 px-4 py-3">
               {post.coverImage ? (
-                <img src={post.coverImage} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
+                <img src={resolveImageUrl(post.coverImage)} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
               ) : null}
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium text-foreground">{post.title}</span>
@@ -375,7 +376,7 @@ export default function BlogEditor() {
               </label>
             </div>
             {values.coverImage ? (
-              <img src={values.coverImage} alt="Cover preview" className="mt-2 h-20 w-full rounded object-cover" />
+              <img src={resolveImageUrl(values.coverImage)} alt="Cover preview" className="mt-2 h-20 w-full rounded object-cover" />
             ) : null}
           </FormField>
 
@@ -397,7 +398,7 @@ export default function BlogEditor() {
               </button>
             </div>
             {values.featuredImage ? (
-              <img src={values.featuredImage} alt="Featured preview" className="mt-2 h-20 w-full rounded object-cover" />
+              <img src={resolveImageUrl(values.featuredImage)} alt="Featured preview" className="mt-2 h-20 w-full rounded object-cover" />
             ) : null}
           </FormField>
 
@@ -575,7 +576,7 @@ function MediaPickerModal({
                 onClick={() => onSelect(item.url)}
                 className="group relative overflow-hidden rounded-lg border border-border transition hover:border-primary"
               >
-                <img src={item.url} alt={item.altText ?? item.originalName} className="h-24 w-full object-cover" />
+                <img src={resolveImageUrl(item.url)} alt={item.altText ?? item.originalName} className="h-24 w-full object-cover" />
                 <span className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-[10px] text-white opacity-0 transition group-hover:opacity-100">
                   {item.originalName}
                 </span>

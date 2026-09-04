@@ -1,5 +1,6 @@
 import type { Conference } from '../../../../shared/types';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -36,7 +37,7 @@ export default function ConferencesSection() {
               <article className="panel flex flex-col gap-3 p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg sm:flex-row sm:items-start">
                 {item.image ? (
                   <img
-                    src={item.image}
+                    src={resolveImageUrl(item.image)}
                     alt={item.title}
                     loading="lazy"
                     className="h-24 w-full rounded-xl object-cover sm:w-36"

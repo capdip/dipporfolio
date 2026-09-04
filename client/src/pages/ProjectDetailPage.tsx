@@ -4,6 +4,7 @@ import type { Project, Publication } from '../../../shared/types';
 import { api } from '../lib/api';
 import { formatDateRange } from '../lib/format';
 import { keys, useResource } from '../hooks/useContent';
+import { resolveImageUrl } from '../lib/resolveImageUrl';
 import {
   Badge,
   ErrorState,
@@ -83,7 +84,7 @@ export default function ProjectDetailPage() {
       <div className="relative overflow-hidden border-b border-border bg-elevated/40">
         {project.projectImage ? (
           <img
-            src={project.projectImage}
+            src={resolveImageUrl(project.projectImage)}
             alt={project.title}
             className="h-64 w-full object-cover md:h-80"
           />

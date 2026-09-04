@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Publication } from '../../../../shared/types';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -52,7 +53,7 @@ export default function PublicationsSection() {
                           aria-label={`View publication: ${publication.title}`}
                         >
                           <img
-                            src={publication.coverImage}
+                            src={resolveImageUrl(publication.coverImage)}
                             alt={`Cover of ${publication.title}`}
                             loading="lazy"
                             className="h-full w-full object-cover transition duration-300 hover:scale-105"

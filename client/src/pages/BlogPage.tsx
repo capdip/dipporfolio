@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { BlogPost } from '../../../shared/types';
 import { excerpt, formatDate } from '../lib/format';
 import { useResource } from '../hooks/useContent';
+import { resolveImageUrl } from '../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -46,7 +47,7 @@ export default function BlogPage() {
                 >
                   {post.coverImage ? (
                     <img
-                      src={post.coverImage}
+                      src={resolveImageUrl(post.coverImage)}
                       alt={post.title}
                       loading="lazy"
                       className="h-44 w-full object-cover"

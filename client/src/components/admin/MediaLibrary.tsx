@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../lib/api';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import type { MediaItem } from '../../../../shared/types';
 import { EmptyState, ErrorState, Skeleton } from '../ui/primitives';
 import {
@@ -222,7 +223,7 @@ const MediaCard = ({
     <li className="panel flex flex-col overflow-hidden p-0">
       <div className="aspect-video w-full overflow-hidden bg-elevated">
         {item.mimeType.startsWith('image/') ? (
-          <img src={item.url} alt={item.altText ?? item.originalName} loading="lazy" className="h-full w-full object-cover" />
+          <img src={resolveImageUrl(item.url)} alt={item.altText ?? item.originalName} loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm text-faint">
             {item.mimeType.replace('application/', '').toUpperCase()}

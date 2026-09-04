@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { keys, useAbout, useSettings } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import type { MediaItem } from '../../../../shared/types';
 import { ErrorState, Skeleton } from '../ui/primitives';
 import { InlineBanner, PageHeader, TextArea, TextInput, useAutoDismissBanner } from './ui';
@@ -166,7 +167,7 @@ export default function AboutEditor() {
           <span className="mb-1.5 block text-sm font-medium text-foreground">Profile Image (fallback — shown only if no photos above)</span>
           <div className="flex flex-wrap items-center gap-2">
             {profileImage ? (
-              <img src={profileImage} alt="Profile" className="h-10 w-14 rounded border border-border object-cover" />
+              <img src={resolveImageUrl(profileImage)} alt="Profile" className="h-10 w-14 rounded border border-border object-cover" />
             ) : null}
             <TextInput
               value={profileImage}
@@ -191,7 +192,7 @@ export default function AboutEditor() {
           <div className="flex flex-col gap-2">
             {photos.map((photo, index) => (
               <div key={photo + index} className="flex flex-wrap items-center gap-2">
-                <img src={photo} alt={`Photo ${index + 1}`} className="h-10 w-14 rounded border border-border object-cover" />
+                <img src={resolveImageUrl(photo)} alt={`Photo ${index + 1}`} className="h-10 w-14 rounded border border-border object-cover" />
                 <TextInput
                   value={photo}
                   onChange={(e) => setPhotos((prev) => prev.map((p, i) => (i === index ? e.target.value : p)))}

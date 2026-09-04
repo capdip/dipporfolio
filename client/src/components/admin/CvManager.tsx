@@ -23,10 +23,14 @@ export default function CvManager() {
   const [label, setLabel] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [notes, setNotes] = useState('');
-  const [downloadUrl, setDownloadUrl] = useState('/api/cv/download');
+  const [downloadUrl, setDownloadUrl] = useState('');
+
+  const API_BASE_URL =
+    (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
 
   useEffect(() => {
-    void api.getCvDownloadUrl().then(setDownloadUrl).catch(() => undefined);
+    const url = API_BASE_URL + '/cv/download';
+    setDownloadUrl(url);
   }, []);
 
   const versionsQuery = useCvVersions();
@@ -209,7 +213,9 @@ const CvRow = ({
           onChange={(v) => onPatch({ isPublic: v })}
         />
         <a
-          href={`${downloadUrl}`}
+          href={downloadUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted transition hover:text-foreground"
         >
           Download

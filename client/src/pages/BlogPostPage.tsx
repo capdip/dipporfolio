@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { api } from '../lib/api';
 import { formatDate } from '../lib/format';
 import { keys } from '../hooks/useContent';
+import { resolveImageUrl } from '../lib/resolveImageUrl';
 import {
   Badge,
   ErrorState,
@@ -132,7 +133,7 @@ export default function BlogPostPage() {
         {post.coverImage ? (
           <div className="container-site mt-10">
             <img
-              src={post.coverImage}
+              src={resolveImageUrl(post.coverImage)}
               alt={post.title}
               loading="lazy"
               className="max-h-[480px] w-full rounded-2xl border border-border object-cover shadow-lg"

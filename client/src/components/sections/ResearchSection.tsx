@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import type { Project, Publication, Research } from '../../../../shared/types';
 import {
   Badge,
@@ -95,7 +96,7 @@ export default function ResearchSection() {
                 <article className="panel flex h-full flex-col transition duration-300 hover:-translate-y-1 hover:shadow-lg">
                   {interest.image ? (
                     <img
-                      src={interest.image}
+                      src={resolveImageUrl(interest.image)}
                       alt={interest.title}
                       loading="lazy"
                       className="h-40 w-full object-cover"

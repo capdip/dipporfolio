@@ -1,6 +1,7 @@
 import type { Recommendation } from '../../../../shared/types';
 import { initials } from '../../lib/format';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   CardSkeleton,
   EmptyState,
@@ -52,7 +53,7 @@ export default function RecommendationsSection() {
                 <figcaption className="flex items-center gap-3 border-t border-border pt-4">
                   {item.photo ? (
                     <img
-                      src={item.photo}
+                      src={resolveImageUrl(item.photo)}
                       alt={`Photo of ${item.name}`}
                       loading="lazy"
                       className="h-11 w-11 rounded-full object-cover"

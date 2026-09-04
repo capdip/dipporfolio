@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { CtaButton } from '../../../../shared/types';
 import { isInternalUrl } from '../../lib/format';
 import { useAbout } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   EmptyState,
@@ -76,7 +77,7 @@ export default function AboutSection() {
             <div>
               <div className="relative overflow-hidden rounded-2xl border border-border shadow-lg">
                 <img
-                  src={currentPhoto}
+                  src={resolveImageUrl(currentPhoto)}
                   alt={`About photo ${slide + 1}`}
                   loading="lazy"
                   className="aspect-[3/4] w-full object-cover"
@@ -124,7 +125,7 @@ export default function AboutSection() {
             </div>
           ) : aboutData.profileImage || aboutData.secondaryImage ? (
             <img
-              src={aboutData.profileImage ?? aboutData.secondaryImage}
+              src={resolveImageUrl(aboutData.profileImage ?? aboutData.secondaryImage)}
               alt="Portrait of the researcher"
               loading="lazy"
               className="w-full rounded-2xl border border-border object-cover shadow-lg"

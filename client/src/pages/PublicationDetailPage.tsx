@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Project, Publication } from '../../../shared/types';
 import { api } from '../lib/api';
 import { keys, useResource } from '../hooks/useContent';
+import { resolveImageUrl } from '../lib/resolveImageUrl';
 import {
   Badge,
   ErrorState,
@@ -112,7 +113,7 @@ export default function PublicationDetailPage() {
           </div>
           {publication.coverImage ? (
             <img
-              src={publication.coverImage}
+              src={resolveImageUrl(publication.coverImage)}
               alt={`Cover of ${publication.title}`}
               loading="lazy"
               className="w-full rounded-2xl border border-border object-cover shadow-lg"

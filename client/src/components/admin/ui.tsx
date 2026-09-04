@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { cn } from '../../lib/cn';
 import { keys } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import type { MediaItem } from '../../../../shared/types';
 
 export const AdminCard = ({
@@ -235,7 +236,7 @@ export const ImagePickerInput = ({
                   )}
                 >
                   {m.mimeType.startsWith('image/') ? (
-                    <img src={m.url} alt={m.altText ?? m.originalName} className="h-full w-full object-cover" />
+                    <img src={resolveImageUrl(m.url)} alt={m.altText ?? m.originalName} className="h-full w-full object-cover" />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center bg-elevated text-[10px] text-muted">
                       {m.mimeType.replace('application/', '')}

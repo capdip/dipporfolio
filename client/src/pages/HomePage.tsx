@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { api } from '../lib/api';
 import { CANONICAL_HOME_SECTIONS, resolveSectionComponent } from '../lib/sectionMap';
 import { useAbout, useMedia, useSettings } from '../hooks/useContent';
+import { resolveImageUrl } from '../lib/resolveImageUrl';
 import ScienceHomeScene from '../components/three/ScienceHomeScene';
 
 export default function HomePage() {
@@ -21,7 +22,7 @@ export default function HomePage() {
       (mediaQuery.data ?? [])
         .filter((m) => String(m.mimeType ?? '').startsWith('image/'))
         .slice(0, 8)
-        .map((m) => m.url),
+        .map((m) => resolveImageUrl(m.url)),
     [mediaQuery.data]
   );
 
@@ -137,7 +138,7 @@ export default function HomePage() {
             {profileImage ? (
               <div data-hero-line className="mt-10 flex items-center gap-4">
                 <img
-                  src={profileImage}
+                  src={resolveImageUrl(profileImage)}
                   alt={`Portrait of ${displayName}`}
                   className="h-16 w-16 rounded-full border-2 border-border object-cover ring-4 ring-primary/15"
                 />

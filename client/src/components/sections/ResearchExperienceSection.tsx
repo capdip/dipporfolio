@@ -1,5 +1,6 @@
 import type { ResearchExperience } from '../../../../shared/types';
 import { useResource } from '../../hooks/useContent';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -34,7 +35,7 @@ export default function ResearchExperienceSection() {
               <article className="panel h-full p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
                 {item.image ? (
                   <img
-                    src={item.image}
+                    src={resolveImageUrl(item.image)}
                     alt={item.project ?? item.organization}
                     loading="lazy"
                     className="mb-4 h-40 w-full rounded-xl object-cover"

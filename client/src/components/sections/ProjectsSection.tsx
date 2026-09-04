@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { excerpt } from '../../lib/format';
 import { useResource } from '../../hooks/useContent';
 import { useAnimations } from '../../animations';
+import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import {
   Badge,
   CardSkeleton,
@@ -61,7 +62,7 @@ export default function ProjectsSection() {
                   {project.projectImage ? (
                     <img
                       data-card-image
-                      src={project.projectImage}
+                      src={resolveImageUrl(project.projectImage)}
                       alt={project.title}
                       loading="lazy"
                       className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
