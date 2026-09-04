@@ -20,8 +20,16 @@ const uploadDirAbsolute = () => {
       return { UPLOAD_DIR: 'uploads', MAX_UPLOAD_MB: 25 };
     }
   })();
-  const dir = path.isAbsolute(env.UPLOAD_DIR) ? env.UPLOAD_DIR : path.join(process.cwd(), env.UPLOAD_DIR);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  // Serverless filesystems are read-only except for /tmp.
+  const base = process.env.VERCEL === '1' ? '/tmp' : process.cwd();
+  const dir = path.isAbsolute(env.UPLOAD_DIR) ? env.UPLOAD_DIR : path.join(base, env.UPLOAD_DIR);
+  if (!fs.existsSync(dir)) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {
+      // Ignore on read-only filesystems.
+    }
+  }
   return dir;
 };
 
