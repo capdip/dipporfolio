@@ -138,9 +138,9 @@ export const TagsInput = ({
   };
   return (
     <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-surface p-2">
-      {value.map((tag) => (
+      {value.map((tag, index) => (
         <span
-          key={tag}
+          key={`${tag}-${index}`}
           className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
         >
           {tag}
@@ -235,11 +235,11 @@ export const ImagePickerInput = ({
                     value === m.url ? 'border-primary' : 'border-transparent hover:border-primary/50'
                   )}
                 >
-                  {m.mimeType.startsWith('image/') ? (
+                  {m.mimeType && m.mimeType.startsWith('image/') ? (
                     <img src={resolveImageUrl(m.url)} alt={m.altText ?? m.originalName} className="h-full w-full object-cover" />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center bg-elevated text-[10px] text-muted">
-                      {m.mimeType.replace('application/', '')}
+                      {m.mimeType ? m.mimeType.replace('application/', '') : 'file'}
                     </span>
                   )}
                 </button>

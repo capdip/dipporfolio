@@ -59,7 +59,6 @@ export default function BlogEditor() {
   const [tagInput, setTagInput] = useState('');
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [mediaPickerTarget, setMediaPickerTarget] = useState<'coverImage' | 'featuredImage'>('coverImage');
-  const [contentFont, setContentFont] = useState('Inter');
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
   const postsQuery = useResource<BlogPost>('blog');
@@ -123,7 +122,6 @@ export default function BlogEditor() {
     setValues(emptyPost());
     setFormError(null);
     setTagInput('');
-    setContentFont('Inter');
     setEditorOpen(true);
   };
 
@@ -132,7 +130,6 @@ export default function BlogEditor() {
     setValues({ ...post });
     setFormError(null);
     setTagInput('');
-    setContentFont(post.contentFont ?? 'Inter');
     setEditorOpen(true);
   };
 
@@ -434,9 +431,9 @@ export default function BlogEditor() {
           <FormField label="Content Font" htmlFor="bl-font">
             <SelectInput
               id="bl-font"
-              value={contentFont}
+              value={values.contentFont ?? 'Inter'}
               options={FONT_OPTIONS}
-              onChange={(e) => { setContentFont(e.target.value); setValues((v) => ({ ...v, contentFont: e.target.value })); }}
+              onChange={(e) => setValues((v) => ({ ...v, contentFont: e.target.value }))}
             />
           </FormField>
           <FormField label="Content" htmlFor="bl-content" required helpText="Supports Markdown (##, **, *, -, images)">
@@ -464,7 +461,7 @@ export default function BlogEditor() {
                 value={values.content ?? ''}
                 onChange={(e) => setValues((v) => ({ ...v, content: e.target.value }))}
                 className={`${inputClasses} rounded-t-none resize-y`}
-                style={{ fontFamily: `'${contentFont}', monospace` }}
+                style={{ fontFamily: `'${values.contentFont ?? 'Inter'}', monospace` }}
               />
             </div>
           </FormField>

@@ -174,10 +174,15 @@ export default function AboutEditor() {
               onChange={(e) => setProfileImage(e.target.value)}
               placeholder="Image URL (leave empty for none)"
               className="min-w-0 flex-1"
+              onBlur={() => saveMutation.mutate({})}
             />
             <button
               type="button"
-              onClick={() => setProfileImage('')}
+              onClick={() => {
+                setProfileImage('');
+                // Auto-save the deletion
+                saveMutation.mutate({});
+              }}
               className="shrink-0 rounded-lg border border-danger/40 px-3 py-2 text-xs font-medium text-danger transition hover:bg-danger/10"
             >
               Delete image
@@ -196,6 +201,7 @@ export default function AboutEditor() {
                 <TextInput
                   value={photo}
                   onChange={(e) => setPhotos((prev) => prev.map((p, i) => (i === index ? e.target.value : p)))}
+                  onBlur={() => saveMutation.mutate({})}
                   className="min-w-0 flex-1"
                 />
                 <button

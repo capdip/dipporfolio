@@ -228,7 +228,7 @@ const FieldControl = ({
         <TextArea
           id={`f-${field.name}`}
           value={String(value ?? '')}
-          placeholder={field.placeholder}
+          placeholder={field.placeholder || ''}
           onChange={(e) => onChange(e.target.value)}
         />
       );
@@ -273,7 +273,7 @@ const FieldControl = ({
           id={`f-${field.name}`}
           value={Array.isArray(value) ? (value as string[]) : []}
           onChange={(v) => onChange(v)}
-          placeholder={field.placeholder}
+          placeholder={field.placeholder || 'Type and press Enter'}
         />
       );
     case 'image':
