@@ -3,32 +3,39 @@
   "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
   "framework": null,
+
   "builds": [
     {
-      "src": "server/src/index.ts",
-      "use": "@vercel/node"
+      "src": "server/dist/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "server/public/**"
+        ]
+      }
     },
     {
       "src": "client/dist/**",
       "use": "@vercel/static"
     }
   ],
+
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "server/src/index.ts"
+      "dest": "server/dist/index.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "server/src/index.ts"
+      "dest": "server/dist/index.js"
     },
     {
       "src": "/downloads/(.*)",
-      "dest": "server/src/index.ts"
+      "dest": "server/dist/index.js"
     },
     {
       "src": "/images/(.*)",
-      "dest": "server/src/index.ts"
+      "dest": "server/dist/index.js"
     },
     {
       "src": "/assets/(.*)",
@@ -36,9 +43,10 @@
     },
     {
       "src": "/(.*)",
-      "dest": "server/src/index.ts"
+      "dest": "server/dist/index.js"
     }
   ],
+
   "env": {
     "NODE_ENV": "production"
   }
