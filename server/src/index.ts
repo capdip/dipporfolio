@@ -6,26 +6,31 @@ import dotenv from 'dotenv';
 
 const isVercel = process.env.VERCEL === '1';
 
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 if (!process.env.JWT_SECRET) {
   // Second attempt: repo-root .env when running via tsx from server/ cwd.
   dotenv.config({ path: path.join(process.cwd(), '.env') });
 }
 
-import { getEnv, isProduction } from './config/env';
-import authRoutes from './routes/auth.routes';
-import { createSingletonRouter } from './routes/singleton.routes';
-import contactRoutes from './routes/contact.routes';
-import mediaRoutes from './routes/media.routes';
-import cvRoutes from './routes/cv.routes';
-import settingsRoutes from './routes/settings.routes';
-import auditRoutes from './routes/audit.routes';
-import { createResourceRouter } from './routes/resource.routes';
-import { aboutUpdateSchema, resourceSchemas } from './validation/schemas';
-import { errorHandler, notFoundHandler } from './middleware/error.middleware';
-import { globalRateLimiter } from './middleware/rate-limit.middleware';
-import { connectToMongoDB, checkDatabaseHealth, getDb } from './db/database';
-import { logger } from './lib/logger';
+import { getEnv, isProduction } from './config/env.js';
+import authRoutes from './routes/auth.routes.js';
+import { createSingletonRouter } from './routes/singleton.routes.js';
+import contactRoutes from './routes/contact.routes.js';
+import mediaRoutes from './routes/media.routes.js';
+import cvRoutes from './routes/cv.routes.js';
+import settingsRoutes from './routes/settings.routes.js';
+import auditRoutes from './routes/audit.routes.js';
+import { createResourceRouter } from './routes/resource.routes.js';
+import { aboutUpdateSchema, resourceSchemas } from './validation/schemas.js';
+import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
+import { globalRateLimiter } from './middleware/rate-limit.middleware.js';
+import { connectToMongoDB, checkDatabaseHealth, getDb } from './db/database.js';
+import { logger } from './lib/logger.js';
 
 const app: Express = express();
 const env = getEnv();
