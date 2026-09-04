@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { keys, useAbout, useSettings } from '../../hooks/useContent';
@@ -27,6 +27,21 @@ export default function AboutEditor() {
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [profileImage, setProfileImage] = useState('');
 
+  // Use refs to always have current values in mutations (avoids stale closures)
+  const descRef = useRef(description);
+  const keywordsRef = useRef(keywordsRaw);
+  const nameRef = useRef(name);
+  const titleRef = useRef(title);
+  const photosRef = useRef(photos);
+  const profileRef = useRef(profileImage);
+
+  useEffect(() => { descRef.current = description; }, [description]);
+  useEffect(() => { keywordsRef.current = keywordsRaw; }, [keywordsRaw]);
+  useEffect(() => { nameRef.current = name; }, [name]);
+  useEffect(() => { titleRef.current = title; }, [title]);
+  useEffect(() => { photosRef.current = photos; }, [photos]);
+  useEffect(() => { profileRef.current = profileImage; }, [profileImage]);
+
   useEffect(() => {
     if (aboutQuery.data) {
       setDescription(aboutQuery.data.profileText ?? '');
@@ -44,22 +59,23 @@ export default function AboutEditor() {
   }, [settingsQuery.data]);
 
   const saveMutation = useMutation({
-    mutationFn: async (overrides?: { images?: string[] }) => {
-      const finalImages = overrides?.images ?? photos;
+    mutationFn: async (overrides?: { images?: string[]; profileImage?: string }) => {
+      const finalImages = overrides?.images ?? photosRef.current;
+      const finalProfile = overrides?.profileImage ?? profileRef.current;
       // Merge with the existing about doc so unrelated fields (biography,
       // highlights, related links, cta…) are preserved instead of wiped.
       await api.saveAbout({
         ...(aboutQuery.data ?? {}),
-        profileText: description.trim(),
-        keywords: parseKeywords(keywordsRaw),
+        profileText: descRef.current.trim(),
+        keywords: parseKeywords(keywordsRef.current),
         images: finalImages.filter((p) => p.trim()),
-        profileImage: profileImage.trim(),
+        profileImage: finalProfile.trim(),
       });
       // Name / title live in site settings (footer). Send the full settings doc
       // because the API replaces it — a partial body would wipe other fields.
       await api.saveSettings({
         ...(settingsQuery.data ?? {}),
-        footer: { ...(settingsQuery.data?.footer ?? {}), name: name.trim(), professionalTitle: title.trim() },
+        footer: { ...(settingsQuery.data?.footer ?? {}), name: nameRef.current.trim(), professionalTitle: titleRef.current.trim() },
       });
     },
     onSuccess: () => {
@@ -79,9 +95,9 @@ export default function AboutEditor() {
         Array.from(files).map((file) => api.uploadMedia(file, { category: 'about', altText: file.name }))
       ),
     onSuccess: (media: MediaItem[]) => {
-      const next = [...photos, ...media.map((m) => m.url)];
+      const next = [...photosRef.current, ...media.map((m) => m.url)];
+      photosRef.current = next;
       setPhotos(next);
-      // Auto-save immediately so uploaded photos persist and appear in the slider.
       saveMutation.mutate({ images: next });
       setBanner({ tone: 'success', message: `${media.length} photo(s) uploaded and saved.` });
     },
@@ -94,6 +110,8 @@ export default function AboutEditor() {
   const removePhoto = (index: number) => {
     const next = photos.filter((_, i) => i !== index);
     setPhotos(next);
+    // Update ref immediately so the mutation uses the latest value
+    photosRef.current = next;
     saveMutation.mutate({ images: next });
   };
 
@@ -187,8 +205,8 @@ export default function AboutEditor() {
               type="button"
               onClick={() => {
                 setProfileImage('');
-                // Auto-save the deletion immediately
-                saveMutation.mutate({});
+                profileRef.current = '';
+                saveMutation.mutate({ profileImage: '' });
               }}
               className="shrink-0 rounded-lg border border-danger/40 px-3 py-2 text-xs font-medium text-danger transition hover:bg-danger/10"
             >
@@ -196,7 +214,7 @@ export default function AboutEditor() {
             </button>
           </div>
           <p className="mt-1.5 text-xs text-faint">
-            Press "Delete image" then "Save changes" to remove the permanent hero image.
+            This image is shown as a fallback when no photos are added below.
           </p>
         </div>
         <div>
@@ -228,10 +246,10 @@ export default function AboutEditor() {
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     if (newPhotoUrl.trim()) {
-                      const next = [...photos, newPhotoUrl.trim()];
+                      const next = [...photosRef.current, newPhotoUrl.trim()];
+                      photosRef.current = next;
                       setPhotos(next);
                       setNewPhotoUrl('');
-                      // Auto-save after adding
                       saveMutation.mutate({ images: next });
                     }
                   }
@@ -242,10 +260,10 @@ export default function AboutEditor() {
                 type="button"
                 onClick={() => {
                   if (newPhotoUrl.trim()) {
-                    const next = [...photos, newPhotoUrl.trim()];
+                    const next = [...photosRef.current, newPhotoUrl.trim()];
+                    photosRef.current = next;
                     setPhotos(next);
                     setNewPhotoUrl('');
-                    // Auto-save after adding
                     saveMutation.mutate({ images: next });
                   }
                 }}

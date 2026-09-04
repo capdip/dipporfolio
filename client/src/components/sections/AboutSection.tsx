@@ -41,7 +41,7 @@ export default function AboutSection() {
   const photos = (
     aboutData?.images && aboutData.images.length > 0
       ? aboutData.images
-      : [aboutData?.profileImage, aboutData?.secondaryImage]
+      : [aboutData?.profileImage]
   ).filter((p): p is string => Boolean(p && p.trim()));
   const currentPhoto = photos.length > 0 ? photos[slide % photos.length] : null;
 
@@ -123,9 +123,9 @@ export default function AboutSection() {
                 </div>
               ) : null}
             </div>
-          ) : aboutData.profileImage || aboutData.secondaryImage ? (
+          ) : aboutData.profileImage ? (
             <img
-              src={resolveImageUrl(aboutData.profileImage ?? aboutData.secondaryImage)}
+              src={resolveImageUrl(aboutData.profileImage)}
               alt="Portrait of the researcher"
               loading="lazy"
               className="w-full rounded-2xl border border-border object-cover shadow-lg"

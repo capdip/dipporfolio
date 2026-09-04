@@ -72,12 +72,23 @@ export default function ProjectDetailPage() {
 
   const project: Project = projectQuery.data;
   const relatedRefs = project.relatedPublications ?? [];
-  // relatedPublications may reference publications by _id OR by title (seed data uses titles).
-  const relatedPublications = (publicationsQuery.data ?? []).filter(
-    (publication) =>
-      (publication._id && relatedRefs.includes(publication._id)) ||
-      relatedRefs.includes(publication.title)
-  );
+  // Normalize references for flexible matching (case-insensitive, trimmed)
+  const normalizedRefs = relatedRefs.map((r) => r.trim().toLowerCase());
+  // relatedPublications may reference publications by _id OR by title.
+  // Use flexible matching: exact _id match OR case-insensitive title match.
+  const relatedPublications = (publicationsQuery.data ?? []).filter((publication) => {
+    if (!publication) return false;
+    // Match by _id (exact)
+    if (publication._id && relatedRefs.includes(publication._id)) return true;
+    // Match by title (case-insensitive, trimmed)
+    const pubTitle = publication.title?.trim().toLowerCase();
+    if (pubTitle && normalizedRefs.includes(pubTitle)) return true;
+    // Partial match: check if any ref is contained in the title or vice versa
+    return normalizedRefs.some(
+      (ref) =>
+        pubTitle && (pubTitle.includes(ref) || ref.includes(pubTitle))
+    );
+  });
 
   return (
     <main id="main-content">

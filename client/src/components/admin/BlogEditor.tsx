@@ -17,9 +17,9 @@ import {
   TextInput,
   useAutoDismissBanner,
 } from './ui';
+import RichTextEditor from './RichTextEditor';
 
-const inputClasses =
-  'w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-foreground placeholder:text-faint focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25';
+
 
 const emptyPost = (): Partial<BlogPost> => ({
   title: '',
@@ -32,22 +32,38 @@ const emptyPost = (): Partial<BlogPost> => ({
   tags: [],
   status: 'draft',
   featured: false,
-  contentFont: 'Inter',
+  contentFont: 'Merriweather',
   publicationDate: new Date().toISOString().split('T')[0],
 });
 
 const FONT_OPTIONS = [
-  { value: 'Inter', label: 'Inter (Default)' },
+  { value: 'Merriweather', label: 'Merriweather (Serif - Recommended)' },
   { value: 'Georgia', label: 'Georgia (Serif)' },
-  { value: 'Merriweather', label: 'Merriweather (Serif)' },
   { value: 'Playfair Display', label: 'Playfair Display (Display)' },
+  { value: 'Lora', label: 'Lora (Serif)' },
+  { value: 'PT Serif', label: 'PT Serif' },
+  { value: 'Inter', label: 'Inter (Sans-serif)' },
   { value: 'Roboto', label: 'Roboto' },
   { value: 'Open Sans', label: 'Open Sans' },
   { value: 'Lato', label: 'Lato' },
-  { value: 'Poppins', label: 'Poppins' },
   { value: 'Source Sans Pro', label: 'Source Sans Pro' },
-  { value: 'Nunito', label: 'Nunito' },
 ];
+
+/** Sanitize a string into a valid URL slug */
+function sanitizeSlug(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special chars except spaces and hyphens
+    .replace(/[\s_]+/g, '-')  // Replace spaces and underscores with hyphens
+    .replace(/-+/g, '-')      // Collapse multiple hyphens
+    .replace(/^-|-$/g, '');   // Remove leading/trailing hyphens
+}
+
+/** Auto-generate a slug from a title */
+function generateSlug(title: string): string {
+  return sanitizeSlug(title).slice(0, 80);
+}
 
 export default function BlogEditor() {
   const { banner, setBanner } = useAutoDismissBanner();
@@ -59,8 +75,6 @@ export default function BlogEditor() {
   const [tagInput, setTagInput] = useState('');
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [mediaPickerTarget, setMediaPickerTarget] = useState<'coverImage' | 'featuredImage'>('coverImage');
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-
   const postsQuery = useAllRecords<BlogPost>('blog');
 
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['resource', 'blog', 'all'] });
@@ -176,24 +190,6 @@ export default function BlogEditor() {
 
   const removeTag = (tag: string) => {
     setValues((v) => ({ ...v, tags: (v.tags ?? []).filter((t) => t !== tag) }));
-  };
-
-  const insertMarkdown = (prefix: string, suffix: string = '') => {
-    const el = contentRef.current;
-    if (!el) return;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const text = values.content ?? '';
-    const selected = text.slice(start, end);
-    const newText = text.slice(0, start) + prefix + selected + suffix + text.slice(end);
-    setValues((v) => ({ ...v, content: newText }));
-    // Use setTimeout to ensure React has updated the state before focusing
-    setTimeout(() => {
-      if (contentRef.current) {
-        contentRef.current.focus();
-        contentRef.current.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-      }
-    }, 0);
   };
 
   const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,12 +331,28 @@ export default function BlogEditor() {
               onChange={(e) => setValues((v) => ({ ...v, subtitle: e.target.value }))}
             />
           </FormField>
-          <FormField label="Slug" htmlFor="bl-slug" required helpText="URL-friendly identifier (kebab-case)">
-            <TextInput
-              id="bl-slug"
-              value={values.slug ?? ''}
-              onChange={(e) => setValues((v) => ({ ...v, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
-            />
+          <FormField label="Slug" htmlFor="bl-slug" required helpText="URL-friendly identifier (kebab-case). Auto-generated from title or type manually.">
+            <div className="flex gap-2">
+              <TextInput
+                id="bl-slug"
+                value={values.slug ?? ''}
+                onChange={(e) => setValues((v) => ({ ...v, slug: sanitizeSlug(e.target.value) }))}
+                placeholder="my-blog-post"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (values.title?.trim()) {
+                    setValues((v) => ({ ...v, slug: generateSlug(v.title ?? '') }));
+                  }
+                }}
+                className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground"
+                title="Generate slug from title"
+              >
+                Auto
+              </button>
+            </div>
           </FormField>
           <FormField label="Author" htmlFor="bl-author">
             <TextInput
@@ -442,34 +454,12 @@ export default function BlogEditor() {
               onChange={(e) => setValues((v) => ({ ...v, contentFont: e.target.value }))}
             />
           </FormField>
-          <FormField label="Content" htmlFor="bl-content" required helpText="Supports Markdown (##, **, *, -, images)">
-            <div className="flex flex-col gap-1">
-              <div className="flex flex-wrap gap-1 rounded-t-lg border border-b-0 border-border bg-elevated px-2 py-1.5">
-                <button type="button" onClick={() => insertMarkdown('## ', '')} title="Heading" className="rounded px-2 py-0.5 text-xs font-bold text-muted hover:bg-surface hover:text-foreground">H2</button>
-                <button type="button" onClick={() => insertMarkdown('### ', '')} title="Subheading" className="rounded px-2 py-0.5 text-xs font-bold text-muted hover:bg-surface hover:text-foreground">H3</button>
-                <span className="w-px bg-border" />
-                <button type="button" onClick={() => insertMarkdown('**', '**')} title="Bold" className="rounded px-2 py-0.5 text-xs font-bold text-muted hover:bg-surface hover:text-foreground">B</button>
-                <button type="button" onClick={() => insertMarkdown('*', '*')} title="Italic" className="rounded px-2 py-0.5 text-xs italic text-muted hover:bg-surface hover:text-foreground">I</button>
-                <button type="button" onClick={() => insertMarkdown('~~', '~~')} title="Strikethrough" className="rounded px-2 py-0.5 text-xs line-through text-muted hover:bg-surface hover:text-foreground">S</button>
-                <span className="w-px bg-border" />
-                <button type="button" onClick={() => insertMarkdown('[', '](url)')} title="Link" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">Link</button>
-                <button type="button" onClick={() => insertMarkdown('![alt](', ')')} title="Image" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">Img</button>
-                <span className="w-px bg-border" />
-                <button type="button" onClick={() => insertMarkdown('- ')} title="Bullet list" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">List</button>
-                <button type="button" onClick={() => insertMarkdown('> ')} title="Quote" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">Quote</button>
-                <button type="button" onClick={() => insertMarkdown('`', '`')} title="Code" className="rounded px-2 py-0.5 text-xs font-mono text-muted hover:bg-surface hover:text-foreground">Code</button>
-                <button type="button" onClick={() => insertMarkdown('\n---\n')} title="Horizontal rule" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">--- </button>
-              </div>
-              <textarea
-                id="bl-content"
-                ref={contentRef}
-                rows={16}
-                value={values.content ?? ''}
-                onChange={(e) => setValues((v) => ({ ...v, content: e.target.value }))}
-                className={`${inputClasses} rounded-t-none resize-y`}
-                style={{ fontFamily: values.contentFont || 'Inter, system-ui, sans-serif' }}
-              />
-            </div>
+          <FormField label="Content" required helpText="Rich text editor with formatting toolbar. Supports Markdown syntax.">
+            <RichTextEditor
+              value={values.content ?? ''}
+              onChange={(content) => setValues((v) => ({ ...v, content }))}
+              placeholder="Write your blog post content here..."
+            />
           </FormField>
           <FormField label="Tags" htmlFor="bl-tags">
             <div className="flex flex-col gap-2">
