@@ -1,8 +1,8 @@
 import { MongoClient, type Db as MongoDb, type Collection as MongoCollection, type FindOptions as MongoFindOptions } from 'mongodb';
-import { getEnv } from '../config/env';
-import { logger } from '../lib/logger';
-import { memDb } from './memory-backend';
-import { seedMemoryData } from './memory-seed';
+import { getEnv } from '../config/env.js';
+import { logger } from '../lib/logger.js';
+import { memDb } from './memory-backend.js';
+import { seedMemoryData } from './memory-seed.js';
 import crypto from 'crypto';
 
 let client: MongoClient | null = null;
@@ -201,7 +201,7 @@ export const connectToMongoDB = async (): Promise<void> => {
 const doConnect = async (): Promise<void> => {
   const env = getEnv();
   if (!env.MONGODB_URI) {
-    logger.warn('MONGODB_URI not set — falling back to in-memory store');
+    logger.warn('MONGODB_URI not set ï¿½ falling back to in-memory store');
     degraded = true;
     await ensureSeeded();
     return;
@@ -218,11 +218,11 @@ const doConnect = async (): Promise<void> => {
     // Auto-seed if database is empty
     const collections = await wrappedDb.listCollections();
     if (collections.length === 0) {
-      logger.info('MongoDB database is empty — running auto-seed...');
+      logger.info('MongoDB database is empty ï¿½ running auto-seed...');
       await autoSeedMongoDB();
     }
   } catch (error) {
-    logger.error('Failed to connect to MongoDB — falling back to in-memory store', { error: String(error) });
+    logger.error('Failed to connect to MongoDB ï¿½ falling back to in-memory store', { error: String(error) });
     degraded = true;
     await ensureSeeded();
   }
