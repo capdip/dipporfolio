@@ -38,9 +38,39 @@ const env = getEnv();
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
+// Accept one or more origins via FRONTEND_URL (comma-separated), plus the
+// deployed Vercel URL(s) supplied automatically by the platform.
+const allowedOrigins = [
+  ...env.FRONTEND_URL.split(',').map((o) => o.trim()).filter(Boolean),
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+  allowedOrigins.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+}
+if (process.env.VERCEL_URL) {
+  allowedOrigins.push(`https://${process.env.VERCEL_URL}`);
+}
+
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Allow same-origin/no-origin requests (server-rendered pages, curl, health checks)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      try {
+        const hostname = new URL(origin).hostname;
+        if (allowedOrigins.includes(origin) || hostname.endsWith('.vercel.app')) {
+          callback(null, true);
+          return;
+        }
+      } catch {
+        /* malformed origin — fall through to reject */
+      }
+      callback(null, false);
+    },
     credentials: true,
   })
 );

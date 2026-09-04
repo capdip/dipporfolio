@@ -25,8 +25,7 @@ import type {
 } from '../../../shared/types';
 
 const API_BASE_URL =
-  (import.meta.env.VITE_API_URL || 'https://dipporfolio1-orpin.vercel.app/')
-    .replace(/\/$/, '') + '/api';
+  (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
 
 export class ApiError extends Error {
   readonly status: number;
