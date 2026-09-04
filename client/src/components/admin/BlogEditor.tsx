@@ -32,53 +32,8 @@ const emptyPost = (): Partial<BlogPost> => ({
   tags: [],
   status: 'draft',
   featured: false,
-  contentFont: 'Merriweather',
   publicationDate: new Date().toISOString().split('T')[0],
 });
-
-const FONT_OPTIONS = [
-  { value: 'Merriweather', label: 'Merriweather (Serif)' },
-  { value: 'Playfair Display', label: 'Playfair Display (Elegant)' },
-  { value: 'Lora', label: 'Lora (Serif)' },
-  { value: 'Inter', label: 'Inter (Modern Sans)' },
-  { value: 'Roboto', label: 'Roboto (Clean Sans)' },
-  { value: 'Source Serif 4', label: 'Source Serif 4 (Serif)' },
-  { value: 'EB Garamond', label: 'EB Garamond (Classic)' },
-  { value: 'Crimson Text', label: 'Crimson Text (Book)' },
-  { value: 'Nunito', label: 'Nunito (Rounded Sans)' },
-  { value: 'Montserrat', label: 'Montserrat (Geometric)' },
-];
-
-// Google Fonts that need to be loaded dynamically
-const GOOGLE_FONTS = [
-  'Merriweather',
-  'Playfair Display',
-  'Lora',
-  'Inter',
-  'Roboto',
-  'Source Serif 4',
-  'EB Garamond',
-  'Crimson Text',
-  'Nunito',
-  'Montserrat',
-];
-
-/** Load Google Fonts dynamically */
-function loadGoogleFont(fontName: string) {
-  if (!GOOGLE_FONTS.includes(fontName)) return;
-  const linkId = `google-font-${fontName.replace(/\s+/g, '-').toLowerCase()}`;
-  if (document.getElementById(linkId)) return;
-  const link = document.createElement('link');
-  link.id = linkId;
-  link.rel = 'stylesheet';
-  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName).replace(/%20/g, '+')}:ital,wght@0,400;0,700;1,400;1,700&display=swap`;
-  document.head.appendChild(link);
-}
-
-// Preload all Google Fonts on module load
-if (typeof window !== 'undefined') {
-  GOOGLE_FONTS.forEach(loadGoogleFont);
-}
 
 const STORAGE_KEY = 'blog_editor_draft';
 
@@ -227,28 +182,31 @@ export default function BlogEditor() {
 
   const openEdit = (post: BlogPost) => {
     setEditingId(post._id ?? null);
-    setValues({ ...post });
+    const editValues = { ...post };
+    setValues(editValues);
     setFormError(null);
     setTagInput('');
-    // Clear any existing draft when opening a fresh edit
-    clearDraft();
+    // Save to draft so it persists across navigation
+    saveDraft(editValues, post._id ?? null);
     setEditorOpen(true);
   };
 
   const handleSave = async () => {
     setFormError(null);
-    if (!values.title?.trim() || !values.slug?.trim() || !values.content?.trim()) {
-      setFormError('Title, slug, and content are required.');
+    if (!values.title?.trim() || !values.content?.trim()) {
+      setFormError('Title and content are required.');
       return;
     }
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(values.slug ?? '')) {
+    // Auto-generate slug from title if not set
+    const slug = values.slug?.trim() || generateSlug(values.title);
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       setFormError('Slug must be lowercase kebab-case (e.g., my-blog-post).');
       return;
     }
     const payload: Partial<BlogPost> = {
       title: values.title.trim(),
       subtitle: values.subtitle?.trim(),
-      slug: values.slug.trim(),
+      slug,
       author: values.author?.trim(),
       content: values.content.trim(),
       excerpt: values.excerpt?.trim(),
@@ -259,7 +217,6 @@ export default function BlogEditor() {
       publicationDate: values.publicationDate,
       coverImage: values.coverImage,
       featuredImage: values.featuredImage,
-      contentFont: values.contentFont ?? 'Inter',
     };
     try {
       if (editingId) await updateMutation.mutateAsync({ id: editingId, payload });
@@ -419,29 +376,7 @@ export default function BlogEditor() {
               onChange={(e) => setValues((v) => ({ ...v, subtitle: e.target.value }))}
             />
           </FormField>
-          <FormField label="Slug" htmlFor="bl-slug" required helpText="URL-friendly identifier (kebab-case). Auto-generated from title or type manually.">
-            <div className="flex gap-2">
-              <TextInput
-                id="bl-slug"
-                value={values.slug ?? ''}
-                onChange={(e) => setValues((v) => ({ ...v, slug: sanitizeSlug(e.target.value) }))}
-                placeholder="my-blog-post"
-                className="flex-1"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (values.title?.trim()) {
-                    setValues((v) => ({ ...v, slug: generateSlug(v.title ?? '') }));
-                  }
-                }}
-                className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground"
-                title="Generate slug from title"
-              >
-                Auto
-              </button>
-            </div>
-          </FormField>
+          {/* Slug is auto-generated from title */}
           <FormField label="Author" htmlFor="bl-author">
             <TextInput
               id="bl-author"
@@ -532,14 +467,6 @@ export default function BlogEditor() {
               rows={2}
               value={values.excerpt ?? ''}
               onChange={(e) => setValues((v) => ({ ...v, excerpt: e.target.value }))}
-            />
-          </FormField>
-          <FormField label="Content Font" htmlFor="bl-font">
-            <SelectInput
-              id="bl-font"
-              value={values.contentFont ?? 'Inter'}
-              options={FONT_OPTIONS}
-              onChange={(e) => setValues((v) => ({ ...v, contentFont: e.target.value }))}
             />
           </FormField>
           <FormField label="Content" required helpText="Rich text editor with formatting toolbar. Supports Markdown syntax.">

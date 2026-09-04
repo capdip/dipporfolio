@@ -86,7 +86,6 @@ export const resourceSchemas: Record<string, ResourceSchema> = {
       { name: 'keywords', label: 'Keywords', type: 'tags', placeholder: 'Type and press Enter' },
       { name: 'projectImage', label: 'Project image', type: 'image' },
       { name: 'documents', label: 'Documents (URLs)', type: 'tags', placeholder: 'Paste URLs and press Enter' },
-      { name: 'relatedPublications', label: 'Related publications', type: 'tags', placeholder: 'Type and press Enter', helpText: 'Add publication titles or IDs related to this project' },
       { name: 'externalLinks', label: 'External links', type: 'links' },
       {
         name: 'status',
