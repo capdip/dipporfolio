@@ -157,6 +157,21 @@ for (const [name, schema] of Object.entries(resourceSchemas)) {
   );
 }
 
+// Uploaded media (public read). Resolve candidate base dirs that work both
+// locally and inside the Vercel serverless bundle, where __dirname differs.
+const candidateBaseDirs = [
+  path.join(__dirname, '..'),
+  path.join(__dirname, '../..'),
+  process.cwd(),
+];
+const findExisting = (...segments: string[]): string | null => {
+  for (const base of candidateBaseDirs) {
+    const candidate = path.join(base, ...segments);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+};
+
 // Uploaded media (public read)
 const uploadsDir = isVercel
   ? path.join('/tmp', 'uploads')
@@ -165,23 +180,28 @@ const uploadsDir = isVercel
     : path.join(process.cwd(), env.UPLOAD_DIR);
 
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+  try {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  } catch {
+    // Read-only filesystem — /tmp is used on Vercel, so this is unexpected.
+  }
 }
-const bundledCv = path.join(__dirname, '../public/cv/Dipesh-Thapa-CV.pdf');
+const bundledCv = findExisting('server', 'public', 'cv', 'Dipesh-Thapa-CV.pdf');
 const bundledCvTarget = path.join(uploadsDir, 'Dipesh-Thapa-CV.pdf');
-if (fs.existsSync(bundledCv) && !fs.existsSync(bundledCvTarget)) {
-  fs.copyFileSync(bundledCv, bundledCvTarget);
+if (bundledCv && !fs.existsSync(bundledCvTarget)) {
+  try { fs.copyFileSync(bundledCv, bundledCvTarget); } catch { /* read-only fs */ }
 }
 // Also expose the bundled hero image under /uploads so media-referenced urls work.
-const bundledHero = path.join(__dirname, '../public/hero.jpg');
+const bundledHero = findExisting('server', 'public', 'hero.jpg');
 const bundledHeroTarget = path.join(uploadsDir, 'hero.jpg');
-if (fs.existsSync(bundledHero) && !fs.existsSync(bundledHeroTarget)) {
-  fs.copyFileSync(bundledHero, bundledHeroTarget);
+if (bundledHero && !fs.existsSync(bundledHeroTarget)) {
+  try { fs.copyFileSync(bundledHero, bundledHeroTarget); } catch { /* read-only fs */ }
 }
-app.use('/downloads', express.static(path.join(__dirname, '../public'), { maxAge: '1d' }));
+const publicDir = findExisting('server', 'public') ?? path.join(process.cwd(), 'server', 'public');
+app.use('/downloads', express.static(publicDir, { maxAge: '1d' }));
 app.use('/uploads', express.static(uploadsDir, { maxAge: '7d', immutable: false }));
 // Serve the bundle's public imagery (hero.jpg + generated gallery placeholders) at /images.
-app.use('/images', express.static(path.join(__dirname, '../public'), { maxAge: '7d' }));
+app.use('/images', express.static(publicDir, { maxAge: '7d' }));
 
 // Serve built client in production
 const clientDist = path.join(__dirname, '../../client/dist');

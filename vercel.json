@@ -1,41 +1,17 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server/src/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": "server/**"
-      }
-    },
-    {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+  "buildCommand": "npm install --prefix client --no-audit --no-fund && npm run build --prefix client",
+  "outputDirectory": "client/dist",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "server/**"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "server/src/index.ts"
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "server/src/index.ts"
-    },
-    {
-      "src": "/downloads/(.*)",
-      "dest": "server/src/index.ts"
-    },
-    {
-      "src": "/images/(.*)",
-      "dest": "server/src/index.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/uploads/(.*)", "destination": "/api/index" },
+    { "source": "/downloads/(.*)", "destination": "/api/index" },
+    { "source": "/images/(.*)", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
