@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../lib/api';
-import { keys, useResource } from '../../hooks/useContent';
+import { keys, useAllRecords } from '../../hooks/useContent';
 import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import type { BlogPost, MediaItem } from '../../../../shared/types';
 import { EmptyState, ErrorState, Skeleton } from '../ui/primitives';
@@ -61,9 +61,9 @@ export default function BlogEditor() {
   const [mediaPickerTarget, setMediaPickerTarget] = useState<'coverImage' | 'featuredImage'>('coverImage');
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
-  const postsQuery = useResource<BlogPost>('blog');
+  const postsQuery = useAllRecords<BlogPost>('blog');
 
-  const invalidate = () => void queryClient.invalidateQueries({ queryKey: keys.resource('blog') });
+  const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['resource', 'blog', 'all'] });
 
   const createMutation = useMutation({
     mutationFn: (payload: Partial<BlogPost>) => api.create<BlogPost>('blog', payload),
@@ -157,7 +157,7 @@ export default function BlogEditor() {
       publicationDate: values.publicationDate,
       coverImage: values.coverImage,
       featuredImage: values.featuredImage,
-      contentFont: values.contentFont ?? contentFont,
+      contentFont: values.contentFont ?? 'Inter',
     };
     try {
       if (editingId) await updateMutation.mutateAsync({ id: editingId, payload });

@@ -230,6 +230,7 @@ const FieldControl = ({
           value={String(value ?? '')}
           placeholder={field.placeholder || ''}
           onChange={(e) => onChange(e.target.value)}
+          rows={field.type === 'richtext' ? 8 : 4}
         />
       );
     case 'number':

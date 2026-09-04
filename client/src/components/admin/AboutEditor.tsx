@@ -223,8 +223,11 @@ export default function AboutEditor() {
                 type="button"
                 onClick={() => {
                   if (newPhotoUrl.trim()) {
-                    setPhotos((prev) => [...prev, newPhotoUrl.trim()]);
+                    const next = [...photos, newPhotoUrl.trim()];
+                    setPhotos(next);
                     setNewPhotoUrl('');
+                    // Auto-save after adding
+                    saveMutation.mutate({ images: next });
                   }
                 }}
                 className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground"

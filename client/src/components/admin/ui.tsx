@@ -189,6 +189,7 @@ export const ImagePickerInput = ({
     queryKey: keys.media(),
     queryFn: () => api.getMedia(),
     enabled: open,
+    staleTime: 120000,
   });
 
   useEffect(() => {
