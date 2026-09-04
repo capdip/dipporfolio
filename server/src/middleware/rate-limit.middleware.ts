@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { tooManyRequests } from '../lib/errors';
+import { tooManyRequests } from '../lib/errors.js';
 
 interface Bucket {
   count: number;
