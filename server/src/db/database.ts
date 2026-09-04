@@ -795,6 +795,28 @@ const autoSeedMongoDB = async (): Promise<void> => {
 /* Health check                                                        */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Self-healing connection guard. If the DB is degraded (e.g. a cold-start
+ * connect timed out) but MongoDB is configured, retry the connection at most
+ * once per RECONNECT_INTERVAL_MS. Called before every API request so regular
+ * routes recover too — not just /api/health.
+ */
+export const ensureMongoConnection = async (): Promise<void> => {
+  if (!getEnv().MONGODB_URI) return;
+  if (wrappedDb && !degraded) return;
+
+  const now = Date.now();
+  if (now - lastReconnectAttempt < RECONNECT_INTERVAL_MS) return;
+  lastReconnectAttempt = now;
+
+  try {
+    await connectToMongoDB();
+  } catch (error) {
+    lastMongoError = String(error);
+    degraded = true;
+  }
+};
+
 export const checkDatabaseHealth = async (): Promise<{
   ok: boolean;
   collections?: string[];
@@ -818,22 +840,9 @@ export const checkDatabaseHealth = async (): Promise<{
   }
 
   // SELF-HEALING: a cold-start timeout permanently set `degraded`, which used
-  // to disable all further reconnect attempts. Retry periodically (throttled)
-  // whenever MongoDB is configured, so one slow boot can never break the API
-  // for the lifetime of the function instance.
-  const mongoConfigured = Boolean(getEnv().MONGODB_URI);
-  if ((!wrappedDb || degraded) && mongoConfigured) {
-    const now = Date.now();
-    if (now - lastReconnectAttempt > RECONNECT_INTERVAL_MS) {
-      lastReconnectAttempt = now;
-      try {
-        await connectToMongoDB();
-      } catch (error) {
-        lastMongoError = String(error);
-        degraded = true;
-      }
-    }
-  }
+  // to disable all further reconnect attempts. Retry periodically so one slow
+  // boot can never break the API for the lifetime of the function instance.
+  await ensureMongoConnection();
 
   if (degraded || !wrappedDb) {
     await ensureSeeded();

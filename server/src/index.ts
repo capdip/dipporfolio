@@ -29,7 +29,7 @@ import { createResourceRouter } from './routes/resource.routes.js';
 import { aboutUpdateSchema, resourceSchemas } from './validation/schemas.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 import { globalRateLimiter } from './middleware/rate-limit.middleware.js';
-import { connectToMongoDB, checkDatabaseHealth, getDb } from './db/database.js';
+import { connectToMongoDB, checkDatabaseHealth, getDb, ensureMongoConnection } from './db/database.js';
 import { logger } from './lib/logger.js';
 
 const app: Express = express();
@@ -89,6 +89,20 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(globalRateLimiter);
+
+// SELF-HEALING DB GUARD: before any API request, if MongoDB is configured but
+// the connection is degraded (e.g. a cold-start timeout), retry it. This is
+// what makes regular routes (/api/education etc.) recover — not just /api/health.
+app.use('/api', (_req: Request, _res: Response, next: NextFunction): void => {
+  void (async () => {
+    try {
+      await ensureMongoConnection();
+    } catch {
+      // Never block request flow on reconnect failures.
+    }
+    next();
+  })();
+});
 
 app.use((req: Request, res: Response, _next: NextFunction) => {
   // Never let browsers/proxies cache API responses.
