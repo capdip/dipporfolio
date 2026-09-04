@@ -1,5 +1,6 @@
 import {
   MongoClient,
+  ObjectId,
   type Db as MongoDb,
   type Collection as MongoCollection,
   type FindOptions as MongoFindOptions,
@@ -141,6 +142,28 @@ class MongoFindCursor {
 class MongoCollectionWrapper {
   constructor(private col: MongoCollection) {}
 
+  /**
+   * _id values are stored inconsistently across deployments: the current code
+   * always writes string ids, but older deployments let MongoDB auto-generate
+   * ObjectIds. When a route looks a document up by its (string) id, match BOTH
+   * forms so updates/deletes on legacy documents keep working.
+   */
+  private normalizeFilter(
+    filter: Record<string, unknown>
+  ): Record<string, unknown> {
+    const id = filter._id;
+
+    if (typeof id === 'string' && /^[0-9a-f]{24}$/i.test(id)) {
+      try {
+        return { ...filter, _id: { $in: [id, new ObjectId(id)] } };
+      } catch {
+        return filter;
+      }
+    }
+
+    return filter;
+  }
+
   find(
     filter: Record<string, unknown> = {},
     options?: {
@@ -155,7 +178,7 @@ class MongoCollectionWrapper {
   async findOne(
     filter: Record<string, unknown> = {}
   ): Promise<Record<string, unknown> | null> {
-    const doc = await this.col.findOne(filter as any);
+    const doc = await this.col.findOne(this.normalizeFilter(filter) as any);
 
     if (!doc) {
       return null;
@@ -212,7 +235,7 @@ class MongoCollectionWrapper {
     upsertedId?: string;
   }> {
     const result = await this.col.updateOne(
-      filter as any,
+      this.normalizeFilter(filter) as any,
       update as any,
       {
         upsert: options?.upsert,
@@ -236,7 +259,7 @@ class MongoCollectionWrapper {
     modifiedCount: number;
   }> {
     const result = await this.col.updateMany(
-      filter as any,
+      this.normalizeFilter(filter) as any,
       update as any
     );
 
@@ -272,7 +295,7 @@ class MongoCollectionWrapper {
     }
 
     const result = await this.col.findOneAndUpdate(
-      filter as any,
+      this.normalizeFilter(filter) as any,
       mongoUpdate as any,
       {
         returnDocument:
@@ -300,7 +323,7 @@ class MongoCollectionWrapper {
   ): Promise<{
     deletedCount: number;
   }> {
-    const result = await this.col.deleteOne(filter as any);
+    const result = await this.col.deleteOne(this.normalizeFilter(filter) as any);
 
     return {
       deletedCount: result.deletedCount,
