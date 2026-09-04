@@ -240,9 +240,9 @@ const autoSeedMongoDB = async (): Promise<void> => {
   } as T & { createdAt: string; updatedAt: string });
 
   // Import seed data
-  const { aboutSeed, educationSeed, researchSeed, projectSeed, publicationSeed, experienceSeed, internshipSeed, researchExperienceSeed, skillSeed, languageSeed, hobbySeed, membershipSeed, conferenceSeed, trainingSeed, recommendationSeed } = await import('../data/cv-seed-data');
-  const { siteSettingsSeed } = await import('../data/site-seed');
-  const { hashPassword } = await import('../lib/password');
+  const { aboutSeed, educationSeed, researchSeed, projectSeed, publicationSeed, experienceSeed, internshipSeed, researchExperienceSeed, skillSeed, languageSeed, hobbySeed, membershipSeed, conferenceSeed, trainingSeed, recommendationSeed } = await import('../data/cv-seed-data.js');
+  const { siteSettingsSeed } = await import('../data/site-seed.js');
+  const { hashPassword } = await import('../lib/password.js');
 
   const putList = async (name: string, items: Array<Record<string, unknown>>): Promise<void> => {
     const col = wrappedDb!.collection(name);

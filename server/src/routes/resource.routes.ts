@@ -11,7 +11,7 @@ import {
   reorderRecords,
   updateRecord,
   type ResourceConfig,
-} from '../services/collection.service';
+} from '../services/collection.service.js';
 import { badRequest } from '../lib/errors.js';
 
 /**

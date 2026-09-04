@@ -41,7 +41,8 @@ const buildSearchFilter = (config: ResourceConfig, search: string): Doc | null =
   };
 };
 
-const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Public list: merges configured public filter + query filters. */
 export const listRecords = async (
