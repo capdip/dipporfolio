@@ -34,6 +34,9 @@ router.post(
   loginRateLimiter,
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
+      // Ensure admin user exists (creates one if missing)
+      await ensureAdminUser();
+      
       const { email, password } = loginSchema.parse(req.body);
       const user = (await usersCollection().findOne({ email })) as UserDoc | null;
       if (!user?.passwordHash) throw unauthorized('Invalid credentials');
