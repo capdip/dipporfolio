@@ -94,8 +94,15 @@ class ApiClient {
     else localStorage.removeItem('auth_token');
   }
 
-  async healthCheck(): Promise<{ status: string; storage: string; database: string }> {
-    return this.request<{ status: string; storage: string; database: string }>('/health');
+  async healthCheck(): Promise<{
+    status: string;
+    storage: string;
+    database: string;
+    mongoUri?: string;
+    error?: string;
+    vercelEnv?: string;
+  }> {
+    return this.request('/health');
   }
 
   /* ---------------- Auth ---------------- */

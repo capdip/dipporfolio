@@ -82,7 +82,7 @@ export default function AdminLayout() {
     const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { isInMemory } = useStorageStatus();
+  const { isInMemory, error, mongoUri } = useStorageStatus();
 
   useEffect(() => {
     setMobileOpen(false);
@@ -140,7 +140,14 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-surface text-foreground">
       {isInMemory && (
         <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-center text-sm text-amber-600 dark:text-amber-400">
-          ⚠️ <strong>Demo Mode</strong> — Changes will NOT persist. Add MONGODB_URI environment variable to Vercel to save data permanently.
+          ⚠️ <strong>Demo Mode</strong> — Changes will NOT persist.
+          {error && <span className="block text-xs mt-1">Error: {error}</span>}
+          {mongoUri && mongoUri !== 'not set' && (
+            <span className="block text-xs mt-1">MongoDB: {mongoUri} (connection failed - check IP whitelist)</span>
+          )}
+          {mongoUri === 'not set' && (
+            <span className="block text-xs mt-1">MONGODB_URI not found in environment. Redeploy after adding it.</span>
+          )}
         </div>
       )}
       <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur">
