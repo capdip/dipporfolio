@@ -12,7 +12,7 @@ import {
   updateRecord,
   type ResourceConfig,
 } from '../services/collection.service';
-import { badRequest } from '../lib/errors';
+import { badRequest } from '../lib/errors.js';
 
 /**
  * Builds a complete REST router for a content resource:
