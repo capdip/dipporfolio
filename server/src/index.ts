@@ -74,11 +74,16 @@ app.use((req: Request, res: Response, _next: NextFunction) => {
 
 app.get('/api/health', async (_req: Request, res: Response) => {
   const dbHealth = await checkDatabaseHealth();
+
   res.status(dbHealth.ok ? 200 : 503).json({
     status: dbHealth.ok ? 'ok' : 'degraded',
     database: dbHealth.ok ? 'connected' : 'unreachable',
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
+    ...(dbHealth.error ? { error: dbHealth.error } : {}),
+    ...(dbHealth.collections
+      ? { collections: dbHealth.collections }
+      : {}),
   });
 });
 
