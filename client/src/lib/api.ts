@@ -24,7 +24,9 @@ import type {
   Training,
 } from '../../../shared/types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL || 'https://dipporfolio1-git-main-dipportfolio.vercel.app')
+    .replace(/\/$/, '') + '/api';
 
 export class ApiError extends Error {
   readonly status: number;
