@@ -25,18 +25,6 @@ export default function PublicationsPage() {
           title="Publications"
           subtitle="Peer-reviewed records and research outputs"
         />
-        <p className="mb-8 max-w-2xl text-sm leading-relaxed text-muted">
-          All publications are indexed on{' '}
-          <a
-            href="https://figshare.com/authors/Dipesh_Thapa/23756241"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-primary underline-offset-2 hover:underline"
-          >
-            Figshare
-          </a>{' '}
-          and include full DOI links for citation.
-        </p>
 
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2">
