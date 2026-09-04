@@ -30,7 +30,8 @@ export type Env = z.infer<typeof envSchema>;
  */
 const loadDotenv = (): void => {
   try {
-    dotenv.config({ path: path.join(__dirname, '../../.env'), quiet: true });
+    // env.ts lives at server/src/config/, so ../../../ is the repo root.
+    dotenv.config({ path: path.join(__dirname, '../../../.env'), quiet: true });
   } catch {
     // No .env available (e.g. Vercel) — rely on real process.env.
   }

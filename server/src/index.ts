@@ -213,6 +213,29 @@ if (bundledHero && !fs.existsSync(bundledHeroTarget)) {
 }
 const publicDir = findExisting('server', 'public') ?? path.join(process.cwd(), 'server', 'public');
 app.use('/downloads', express.static(publicDir, { maxAge: '1d' }));
+
+// Legacy /uploads/<filename> references (e.g. hero, about, project and publication
+// images saved before media was stored in MongoDB). On Vercel the file may no
+// longer exist on disk (/tmp is ephemeral), so fall back to the bytes we now keep
+// in MongoDB. This must be registered before the static mount below.
+app.get('/uploads/:filename', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const name = req.params.filename as string;
+    const doc = (await getDb().collection('media').findOne({ filename: name })) as Record<string, unknown> | null;
+    if (doc && typeof doc.contentBase64 === 'string' && doc.contentBase64) {
+      const buffer = Buffer.from(doc.contentBase64, 'base64');
+      res.setHeader('Content-Type', String(doc.mimeType ?? 'application/octet-stream'));
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Content-Length', buffer.length);
+      res.send(buffer);
+      return;
+    }
+  } catch {
+    // fall through to static / disk
+  }
+  next();
+});
+
 app.use('/uploads', express.static(uploadsDir, { maxAge: '7d', immutable: false }));
 // Serve the bundle's public imagery (hero.jpg + generated gallery placeholders) at /images.
 app.use('/images', express.static(publicDir, { maxAge: '7d' }));
