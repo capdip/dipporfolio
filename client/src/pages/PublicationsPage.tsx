@@ -54,40 +54,52 @@ export default function PublicationsPage() {
               <Reveal key={pub._id ?? pub.title} delay={index * 0.04}>
                 <Link
                   to={`/publications/${pub._id}`}
-                  className="panel group flex h-full flex-col p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:-translate-y-1 focus-visible:shadow-lg"
+                  className="panel group flex h-full flex-col overflow-hidden p-0 transition duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:-translate-y-1 focus-visible:shadow-lg"
                   aria-label={`View publication: ${pub.title}`}
                 >
-                  <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <Badge tone="primary">{pub.year}</Badge>
-                    <Badge tone={(typeColors[pub.publicationType] as 'primary' | 'accent' | 'neutral' | 'success' | 'warning') ?? 'neutral'}>
-                      {pub.publicationType}
-                    </Badge>
-                    {pub.researchArea ? (
-                      <Badge tone="accent">{pub.researchArea}</Badge>
+                  {pub.coverImage ? (
+                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-elevated">
+                      <img
+                        src={pub.coverImage}
+                        alt={`Cover of ${pub.title}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  ) : null}
+                  <div className="flex flex-1 flex-col p-6">
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <Badge tone="primary">{pub.year}</Badge>
+                      <Badge tone={(typeColors[pub.publicationType] as 'primary' | 'accent' | 'neutral' | 'success' | 'warning') ?? 'neutral'}>
+                        {pub.publicationType}
+                      </Badge>
+                      {pub.researchArea ? (
+                        <Badge tone="accent">{pub.researchArea}</Badge>
+                      ) : null}
+                      {pub.featured ? (
+                        <Badge tone="warning">Featured</Badge>
+                      ) : null}
+                    </div>
+                    <h3 className="font-heading text-base font-semibold text-foreground group-hover:text-primary">
+                      {pub.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-faint">
+                      {pub.authors.join(', ')}
+                    </p>
+                    {pub.publisher ? (
+                      <p className="mt-1 text-xs text-muted">{pub.publisher}</p>
                     ) : null}
-                    {pub.featured ? (
-                      <Badge tone="warning">Featured</Badge>
+                    {pub.citation ? (
+                      <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-faint italic">
+                        {pub.citation}
+                      </p>
+                    ) : null}
+                    {pub.doi ? (
+                      <p className="mt-auto pt-3 text-xs text-primary break-all">
+                        DOI: {pub.doi.replace('https://doi.org/', '')}
+                      </p>
                     ) : null}
                   </div>
-                  <h3 className="font-heading text-base font-semibold text-foreground group-hover:text-primary">
-                    {pub.title}
-                  </h3>
-                  <p className="mt-1 text-xs text-faint">
-                    {pub.authors.join(', ')}
-                  </p>
-                  {pub.publisher ? (
-                    <p className="mt-1 text-xs text-muted">{pub.publisher}</p>
-                  ) : null}
-                  {pub.citation ? (
-                    <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-faint italic">
-                      {pub.citation}
-                    </p>
-                  ) : null}
-                  {pub.doi ? (
-                    <p className="mt-auto pt-3 text-xs text-primary break-all">
-                      DOI: {pub.doi.replace('https://doi.org/', '')}
-                    </p>
-                  ) : null}
                 </Link>
               </Reveal>
             ))}

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import type { Publication } from '../../../shared/types';
+import type { Project, Publication } from '../../../shared/types';
 import { api } from '../lib/api';
-import { keys } from '../hooks/useContent';
+import { keys, useResource } from '../hooks/useContent';
 import {
   Badge,
   ErrorState,
@@ -21,6 +21,15 @@ export default function PublicationDetailPage() {
     enabled: Boolean(id),
     retry: false,
   });
+  const projectsQuery = useResource<Project>('projects');
+
+  // relatedProject stores either a Mongo _id or a project title. Match against
+  // the loaded projects so we can link to the project page; otherwise show the
+  // raw value as text. `publication` is declared below after the pending/error
+  // guards; here we only reference publicationQuery.data directly.
+  const relatedProject = projectsQuery.data?.find(
+    (p) => p._id === publicationQuery.data?.relatedProject || p.title === publicationQuery.data?.relatedProject
+  );
 
   if (publicationQuery.isPending) {
     return (
@@ -138,6 +147,22 @@ export default function PublicationDetailPage() {
               {citation}
             </pre>
           </div>
+
+          {publication.relatedProject ? (
+            <div className="panel p-6">
+              <h2 className="font-heading text-base font-semibold text-foreground">Related project</h2>
+              {relatedProject ? (
+                <Link
+                  to={`/projects/${relatedProject._id}`}
+                  className="mt-2 inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                  {relatedProject.title}
+                </Link>
+              ) : (
+                <p className="mt-2 text-sm text-muted">{publication.relatedProject}</p>
+              )}
+            </div>
+          ) : null}
 
           {publication.keywords && publication.keywords.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
