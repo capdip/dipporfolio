@@ -78,6 +78,7 @@ app.get('/api/health', async (_req: Request, res: Response) => {
   res.status(dbHealth.ok ? 200 : 503).json({
     status: dbHealth.ok ? 'ok' : 'degraded',
     database: dbHealth.ok ? 'connected' : 'unreachable',
+    storage: env.MONGODB_URI ? 'mongodb' : 'in-memory (data will not persist between requests)',
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
     ...(dbHealth.error ? { error: dbHealth.error } : {}),
