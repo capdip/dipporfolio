@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -16,17 +22,32 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-let cachedEnv: Env | null = null;
+/**
+ * Best-effort load of the repo-root .env file. Safe to call on every getEnv():
+ * on Vercel the .env is never deployed (it is gitignored) so this is a no-op and
+ * the platform-injected environment variables are used instead. dotenv does not
+ * override variables that are already set.
+ */
+const loadDotenv = (): void => {
+  try {
+    dotenv.config({ path: path.join(__dirname, '../../.env'), quiet: true });
+  } catch {
+    // No .env available (e.g. Vercel) — rely on real process.env.
+  }
+};
 
 export const getEnv = (): Env => {
-  if (cachedEnv) return cachedEnv;
+  // Do not cache. getEnv() can be invoked during ESM import evaluation (e.g.
+  // media.routes' multer config) BEFORE index.ts calls dotenv.config(), so a
+  // stale cache would silently drop values like MONGODB_URI that get loaded
+  // from .env a moment later.
+  loadDotenv();
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid environment configuration -> ${issues}`);
   }
-  cachedEnv = parsed.data;
-  return cachedEnv;
+  return parsed.data;
 };
 
 export const isProduction = (): boolean => getEnv().NODE_ENV === 'production';
