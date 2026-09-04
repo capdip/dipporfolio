@@ -1,0 +1,2 @@
+{"ts":"2026-08-23T21:02:49.134Z","level":"error","service":"portfolio-api","message":"Failed to connect to MongoDB — falling back to in-memory store","meta":{"error":"MongoServerSelectionError: connect ECONNREFUSED ::1:27017, connect ECONNREFUSED 127.0.0.1:27017"}}
+{"ts":"2026-08-23T21:02:49.376Z","level":"warn","service":"portfolio-api","message":"Database unreachable at boot — API will serve degraded until it reconnects."}

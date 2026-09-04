@@ -1,0 +1,237 @@
+@import "tailwindcss";
+
+/* Animated fallback for the hero 3D scene (used when WebGL is unavailable
+   or the user prefers reduced motion). Two soft color blobs drift slowly. */
+.scene-fallback {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 60% at 30% 30%, color-mix(in srgb, var(--primary) 14%, transparent), transparent),
+    radial-gradient(ellipse 60% 55% at 72% 65%, color-mix(in srgb, var(--accent) 12%, transparent), transparent);
+}
+.scene-fallback::before,
+.scene-fallback::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.45;
+  will-change: transform;
+}
+.scene-fallback::before {
+  width: 42%;
+  height: 65%;
+  left: 8%;
+  top: 18%;
+  background: var(--primary);
+  animation: scene-blob-a 16s ease-in-out infinite alternate;
+}
+.scene-fallback::after {
+  width: 38%;
+  height: 58%;
+  right: 10%;
+  bottom: 8%;
+  background: var(--accent);
+  animation: scene-blob-b 13s ease-in-out infinite alternate;
+}
+@keyframes scene-blob-a {
+  from { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(60px, -40px) scale(1.18); }
+  to   { transform: translate(-30px, 30px) scale(0.92); }
+}
+@keyframes scene-blob-b {
+  from { transform: translate(0, 0) scale(0.95); }
+  50%  { transform: translate(-50px, 35px) scale(1.15); }
+  to   { transform: translate(35px, -25px) scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-fallback::before,
+  .scene-fallback::after {
+    animation: none;
+  }
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-elevated: var(--elevated);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --font-heading: var(--font-heading-stack);
+  --font-body: var(--font-body-stack);
+  --radius-card: var(--radius-tokens);
+}
+
+:root {
+  --background: #f5f8fc;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --elevated: #eef3f9;
+  --foreground: #0b1526;
+  --muted: #43566e;
+  --faint: #7c8ba1;
+  --border: #d9e2ee;
+  --primary: #0c6fbe;
+  --primary-strong: #095a9c;
+  --accent: #6d28d9;
+  --success: #047857;
+  --warning: #b45309;
+  --danger: #be123c;
+  --font-heading-stack: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body-stack: "Inter", system-ui, sans-serif;
+  --radius-tokens: 0.75rem;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #04070f;
+  --surface: #080d18;
+  --card: #0b1220;
+  --elevated: #101a2c;
+  --foreground: #e4edf8;
+  --muted: #93a5bd;
+  --faint: #5d7089;
+  --border: #16233a;
+  --primary: #38bdf8;
+  --primary-strong: #0ea5e9;
+  --accent: #a78bfa;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body-stack);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.container-site {
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+@media (min-width: 1024px) {
+  .container-site {
+    padding-inline: 2rem;
+  }
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tokens);
+}
+
+.glass-panel {
+  background: color-mix(in srgb, var(--card) 72%, transparent);
+  backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.text-gradient {
+  background: linear-gradient(120deg, var(--primary) 10%, var(--accent) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hairline-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--border) 55%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 75%);
+}
+
+.timeline-rail {
+  position: relative;
+}
+.timeline-rail::before {
+  content: "";
+  position: absolute;
+  left: 0.68rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--primary) 55%, transparent) 12%,
+    color-mix(in srgb, var(--accent) 45%, transparent) 88%,
+    transparent
+  );
+}
+@media (min-width: 768px) {
+  .timeline-rail::before {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.prose-content h2,
+.prose-content h3 {
+  font-family: var(--font-heading-stack);
+  color: var(--foreground);
+}
+.prose-content p {
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 0.5rem;
+}

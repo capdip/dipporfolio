@@ -1,0 +1,589 @@
+import { useRef, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { api, ApiError } from '../../lib/api';
+import { keys, useResource } from '../../hooks/useContent';
+import type { BlogPost, MediaItem } from '../../../../shared/types';
+import { EmptyState, ErrorState, Skeleton } from '../ui/primitives';
+import {
+  CheckboxInput,
+  ConfirmButton,
+  Drawer,
+  FormField,
+  InlineBanner,
+  PageHeader,
+  SelectInput,
+  TextArea,
+  TextInput,
+  useAutoDismissBanner,
+} from './ui';
+
+const inputClasses =
+  'w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-foreground placeholder:text-faint focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25';
+
+const emptyPost = (): Partial<BlogPost> => ({
+  title: '',
+  subtitle: '',
+  slug: '',
+  author: '',
+  content: '',
+  excerpt: '',
+  category: '',
+  tags: [],
+  status: 'draft',
+  featured: false,
+  contentFont: 'Inter',
+  publicationDate: new Date().toISOString().split('T')[0],
+});
+
+const FONT_OPTIONS = [
+  { value: 'Inter', label: 'Inter (Default)' },
+  { value: 'Georgia', label: 'Georgia (Serif)' },
+  { value: 'Merriweather', label: 'Merriweather (Serif)' },
+  { value: 'Playfair Display', label: 'Playfair Display (Display)' },
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Open Sans', label: 'Open Sans' },
+  { value: 'Lato', label: 'Lato' },
+  { value: 'Poppins', label: 'Poppins' },
+  { value: 'Source Sans Pro', label: 'Source Sans Pro' },
+  { value: 'Nunito', label: 'Nunito' },
+];
+
+export default function BlogEditor() {
+  const { banner, setBanner } = useAutoDismissBanner();
+  const queryClient = useQueryClient();
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [values, setValues] = useState<Partial<BlogPost>>(emptyPost());
+  const [formError, setFormError] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState('');
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<'coverImage' | 'featuredImage'>('coverImage');
+  const [contentFont, setContentFont] = useState('Inter');
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+
+  const postsQuery = useResource<BlogPost>('blog');
+
+  const invalidate = () => void queryClient.invalidateQueries({ queryKey: keys.resource('blog') });
+
+  const createMutation = useMutation({
+    mutationFn: (payload: Partial<BlogPost>) => api.create<BlogPost>('blog', payload),
+    onSuccess: () => {
+      invalidate();
+      setEditorOpen(false);
+      setBanner({ tone: 'success', message: 'Blog post created.' });
+    },
+    onError: (err) =>
+      setFormError(err instanceof ApiError ? err.message : 'Failed to save blog post.'),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<BlogPost> }) =>
+      api.update<BlogPost>('blog', id, payload),
+    onSuccess: () => {
+      invalidate();
+      setEditorOpen(false);
+      setBanner({ tone: 'success', message: 'Blog post updated.' });
+    },
+    onError: (err) =>
+      setFormError(err instanceof ApiError ? err.message : 'Failed to save blog post.'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.remove('blog', id),
+    onSuccess: () => {
+      invalidate();
+      setBanner({ tone: 'success', message: 'Blog post deleted.' });
+    },
+    onError: (err) =>
+      setBanner({
+        tone: 'error',
+        message: err instanceof ApiError ? err.message : 'Delete failed.',
+      }),
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('metadata', JSON.stringify({ category: 'blog', altText: file.name }));
+      return api.uploadMedia(file, { category: 'blog', altText: file.name });
+    },
+    onSuccess: (media: MediaItem) => {
+      setValues((v) => ({ ...v, [mediaPickerTarget]: media.url }));
+      setMediaPickerOpen(false);
+      setBanner({ tone: 'success', message: 'Image uploaded and set.' });
+    },
+    onError: (err) =>
+      setBanner({ tone: 'error', message: err instanceof ApiError ? err.message : 'Image upload failed.' }),
+  });
+
+  const openCreate = () => {
+    setEditingId(null);
+    setValues(emptyPost());
+    setFormError(null);
+    setTagInput('');
+    setContentFont('Inter');
+    setEditorOpen(true);
+  };
+
+  const openEdit = (post: BlogPost) => {
+    setEditingId(post._id ?? null);
+    setValues({ ...post });
+    setFormError(null);
+    setTagInput('');
+    setContentFont(post.contentFont ?? 'Inter');
+    setEditorOpen(true);
+  };
+
+  const handleSave = async () => {
+    setFormError(null);
+    if (!values.title?.trim() || !values.slug?.trim() || !values.content?.trim()) {
+      setFormError('Title, slug, and content are required.');
+      return;
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(values.slug ?? '')) {
+      setFormError('Slug must be lowercase kebab-case (e.g., my-blog-post).');
+      return;
+    }
+    const payload: Partial<BlogPost> = {
+      title: values.title.trim(),
+      subtitle: values.subtitle?.trim(),
+      slug: values.slug.trim(),
+      author: values.author?.trim(),
+      content: values.content.trim(),
+      excerpt: values.excerpt?.trim(),
+      category: values.category?.trim(),
+      tags: values.tags ?? [],
+      status: values.status ?? 'draft',
+      featured: values.featured ?? false,
+      publicationDate: values.publicationDate,
+      coverImage: values.coverImage,
+      featuredImage: values.featuredImage,
+      contentFont: values.contentFont ?? contentFont,
+    };
+    try {
+      if (editingId) await updateMutation.mutateAsync({ id: editingId, payload });
+      else await createMutation.mutateAsync(payload);
+    } catch {
+      setFormError('Failed to save blog post.');
+    }
+  };
+
+  const addTag = () => {
+    if (tagInput.trim() && !values.tags?.includes(tagInput.trim())) {
+      setValues((v) => ({ ...v, tags: [...(v.tags ?? []), tagInput.trim()] }));
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tag: string) => {
+    setValues((v) => ({ ...v, tags: (v.tags ?? []).filter((t) => t !== tag) }));
+  };
+
+  const insertMarkdown = (prefix: string, suffix: string = '') => {
+    const el = contentRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = values.content ?? '';
+    const selected = text.slice(start, end);
+    const newText = text.slice(0, start) + prefix + selected + suffix + text.slice(end);
+    setValues((v) => ({ ...v, content: newText }));
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+    }, 0);
+  };
+
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadImageMutation.mutate(file);
+    e.target.value = '';
+  };
+
+  const openMediaPicker = (target: 'coverImage' | 'featuredImage') => {
+    setMediaPickerTarget(target);
+    setMediaPickerOpen(true);
+  };
+
+  const busy = createMutation.isPending || updateMutation.isPending;
+  const posts = postsQuery.data ?? [];
+
+  return (
+    <div>
+      <PageHeader
+        title="Blog Posts"
+        description="Manage blog posts and articles."
+        actions={
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-strong dark:text-slate-900"
+          >
+            + New post
+          </button>
+        }
+      />
+
+      {banner ? <InlineBanner tone={banner.tone} message={banner.message} onDismiss={() => setBanner(null)} /> : null}
+
+      {postsQuery.isLoading ? (
+        <div className="flex flex-col gap-2">
+          {[0, 1].map((i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : postsQuery.isError ? (
+        <ErrorState
+          message={postsQuery.error instanceof ApiError ? postsQuery.error.message : 'Failed to load blog posts.'}
+          onRetry={() => void postsQuery.refetch()}
+        />
+      ) : posts.length === 0 ? (
+        <EmptyState message="No blog posts yet." hint="Create your first blog post." />
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {posts.map((post) => (
+            <li key={post._id} className="panel flex items-center gap-3 px-4 py-3">
+              {post.coverImage ? (
+                <img src={post.coverImage} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
+              ) : null}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium text-foreground">{post.title}</span>
+                <span className="text-xs text-faint">
+                  {post.slug} · {post.status} · {post.category || 'Uncategorized'}
+                </span>
+              </span>
+              {post.featured && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Featured</span>
+              )}
+              <a
+                href={`/blog/${post.slug}`}
+                className="shrink-0 rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-primary"
+                title="Preview on site"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </a>
+              <button
+                type="button"
+                aria-label={`Edit ${post.title}`}
+                onClick={() => openEdit(post)}
+                className="shrink-0 rounded-lg p-1.5 text-muted transition hover:bg-elevated hover:text-primary"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 20h4L19.5 8.5a2.1 2.1 0 00-3-3L5 17v3z" strokeLinejoin="round" />
+                </svg>
+              </button>
+              <ConfirmButton
+                ariaLabel={`Delete ${post.title}`}
+                confirmMessage={`Delete "${post.title}"?`}
+                onConfirm={() => post._id && deleteMutation.mutate(post._id)}
+                className="shrink-0 rounded-lg p-1.5 text-muted transition hover:bg-danger/10 hover:text-danger"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-8 0l1 13h8l1-13" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </ConfirmButton>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Drawer
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        title={editingId ? 'Edit blog post' : 'New blog post'}
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setEditorOpen(false)}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition hover:text-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void handleSave()}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-strong disabled:opacity-50 dark:text-slate-900"
+            >
+              {busy ? 'Saving…' : editingId ? 'Save changes' : 'Create'}
+            </button>
+          </div>
+        }
+      >
+        {formError ? <InlineBanner tone="error" message={formError} onDismiss={() => setFormError(null)} /> : null}
+        <div className="flex flex-col gap-4">
+          <FormField label="Title" htmlFor="bl-title" required>
+            <TextInput
+              id="bl-title"
+              value={values.title ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
+            />
+          </FormField>
+          <FormField label="Subtitle" htmlFor="bl-subtitle">
+            <TextInput
+              id="bl-subtitle"
+              value={values.subtitle ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, subtitle: e.target.value }))}
+            />
+          </FormField>
+          <FormField label="Slug" htmlFor="bl-slug" required helpText="URL-friendly identifier (kebab-case)">
+            <TextInput
+              id="bl-slug"
+              value={values.slug ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
+            />
+          </FormField>
+          <FormField label="Author" htmlFor="bl-author">
+            <TextInput
+              id="bl-author"
+              value={values.author ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, author: e.target.value }))}
+            />
+          </FormField>
+          <FormField label="Category" htmlFor="bl-category">
+            <TextInput
+              id="bl-category"
+              value={values.category ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, category: e.target.value }))}
+            />
+          </FormField>
+
+          <FormField label="Cover Image" htmlFor="bl-cover" helpText="URL or upload from media library">
+            <div className="flex gap-2">
+              <TextInput
+                id="bl-cover"
+                value={values.coverImage ?? ''}
+                onChange={(e) => setValues((v) => ({ ...v, coverImage: e.target.value }))}
+                placeholder="https://... or upload"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => openMediaPicker('coverImage')}
+                className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground"
+              >
+                Browse
+              </button>
+              <label className="shrink-0 cursor-pointer rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground">
+                Upload
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageFileSelect} />
+              </label>
+            </div>
+            {values.coverImage ? (
+              <img src={values.coverImage} alt="Cover preview" className="mt-2 h-20 w-full rounded object-cover" />
+            ) : null}
+          </FormField>
+
+          <FormField label="Featured Image" htmlFor="bl-featured" helpText="Used for social sharing (Open Graph)">
+            <div className="flex gap-2">
+              <TextInput
+                id="bl-featured"
+                value={values.featuredImage ?? ''}
+                onChange={(e) => setValues((v) => ({ ...v, featuredImage: e.target.value }))}
+                placeholder="https://... or upload"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => openMediaPicker('featuredImage')}
+                className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground"
+              >
+                Browse
+              </button>
+            </div>
+            {values.featuredImage ? (
+              <img src={values.featuredImage} alt="Featured preview" className="mt-2 h-20 w-full rounded object-cover" />
+            ) : null}
+          </FormField>
+
+          <FormField label="Publication date" htmlFor="bl-date">
+            <TextInput
+              id="bl-date"
+              type="date"
+              value={values.publicationDate ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, publicationDate: e.target.value }))}
+            />
+          </FormField>
+          <FormField label="Status" htmlFor="bl-status">
+            <SelectInput
+              id="bl-status"
+              value={values.status ?? 'draft'}
+              options={[
+                { value: 'draft', label: 'Draft' },
+                { value: 'published', label: 'Published' },
+                { value: 'hidden', label: 'Hidden' },
+                { value: 'archived', label: 'Archived' },
+              ]}
+              onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as BlogPost['status'] }))}
+            />
+          </FormField>
+          <FormField label="Excerpt" htmlFor="bl-excerpt" helpText="Short description for listing pages">
+            <TextArea
+              id="bl-excerpt"
+              rows={2}
+              value={values.excerpt ?? ''}
+              onChange={(e) => setValues((v) => ({ ...v, excerpt: e.target.value }))}
+            />
+          </FormField>
+          <FormField label="Content Font" htmlFor="bl-font">
+            <SelectInput
+              id="bl-font"
+              value={contentFont}
+              options={FONT_OPTIONS}
+              onChange={(e) => { setContentFont(e.target.value); setValues((v) => ({ ...v, contentFont: e.target.value })); }}
+            />
+          </FormField>
+          <FormField label="Content" htmlFor="bl-content" required helpText="Supports Markdown (##, **, *, -, images)">
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap gap-1 rounded-t-lg border border-b-0 border-border bg-elevated px-2 py-1.5">
+                <button type="button" onClick={() => insertMarkdown('## ', '')} title="Heading" className="rounded px-2 py-0.5 text-xs font-bold text-muted hover:bg-surface hover:text-foreground">H2</button>
+                <button type="button" onClick={() => insertMarkdown('### ', '')} title="Subheading" className="rounded px-2 py-0.5 text-xs font-bold text-muted hover:bg-surface hover:text-foreground">H3</button>
+                <span className="w-px bg-border" />
+                <button type="button" onClick={() => insertMarkdown('**', '**')} title="Bold" className="rounded px-2 py-0.5 text-xs font-bold text-muted hover:bg-surface hover:text-foreground">B</button>
+                <button type="button" onClick={() => insertMarkdown('*', '*')} title="Italic" className="rounded px-2 py-0.5 text-xs italic text-muted hover:bg-surface hover:text-foreground">I</button>
+                <button type="button" onClick={() => insertMarkdown('~~', '~~')} title="Strikethrough" className="rounded px-2 py-0.5 text-xs line-through text-muted hover:bg-surface hover:text-foreground">S</button>
+                <span className="w-px bg-border" />
+                <button type="button" onClick={() => insertMarkdown('[', '](url)')} title="Link" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">Link</button>
+                <button type="button" onClick={() => insertMarkdown('![alt](', ')')} title="Image" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">Img</button>
+                <span className="w-px bg-border" />
+                <button type="button" onClick={() => insertMarkdown('- ')} title="Bullet list" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">List</button>
+                <button type="button" onClick={() => insertMarkdown('> ')} title="Quote" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">Quote</button>
+                <button type="button" onClick={() => insertMarkdown('`', '`')} title="Code" className="rounded px-2 py-0.5 text-xs font-mono text-muted hover:bg-surface hover:text-foreground">Code</button>
+                <button type="button" onClick={() => insertMarkdown('\n---\n')} title="Horizontal rule" className="rounded px-2 py-0.5 text-xs text-muted hover:bg-surface hover:text-foreground">--- </button>
+              </div>
+              <textarea
+                id="bl-content"
+                ref={contentRef}
+                rows={16}
+                value={values.content ?? ''}
+                onChange={(e) => setValues((v) => ({ ...v, content: e.target.value }))}
+                className={`${inputClasses} rounded-t-none resize-y`}
+                style={{ fontFamily: `'${contentFont}', monospace` }}
+              />
+            </div>
+          </FormField>
+          <FormField label="Tags" htmlFor="bl-tags">
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <TextInput
+                  id="bl-tags"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  placeholder="Add tag and press Enter"
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted transition hover:text-foreground"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(values.tags ?? []).map((tag) => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 rounded-full bg-elevated px-3 py-1 text-sm text-muted"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="text-muted hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </FormField>
+          <CheckboxInput
+            label="Featured post"
+            checked={values.featured ?? false}
+            onChange={(checked) => setValues((v) => ({ ...v, featured: checked }))}
+          />
+        </div>
+      </Drawer>
+
+      {mediaPickerOpen && (
+        <MediaPickerModal
+          onSelect={(url) => {
+            setValues((v) => ({ ...v, [mediaPickerTarget]: url }));
+            setMediaPickerOpen(false);
+          }}
+          onClose={() => setMediaPickerOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MediaPickerModal({
+  onSelect,
+  onClose,
+}: {
+  onSelect: (url: string) => void;
+  onClose: () => void;
+}) {
+  const { data: media, isLoading } = useResource<MediaItem>('media');
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => api.uploadMedia(file, { category: 'blog', altText: file.name }),
+    onSuccess: (item: MediaItem) => onSelect(item.url),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="panel max-h-[80vh] w-full max-w-2xl overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-heading text-lg font-semibold text-foreground">Select Image</h3>
+          <button type="button" onClick={onClose} className="text-muted hover:text-foreground">✕</button>
+        </div>
+        <label className="mb-4 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted transition hover:text-foreground">
+          Upload new image
+          <input
+            ref={uploadRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadMutation.mutate(file);
+              e.target.value = '';
+            }}
+          />
+        </label>
+        {isLoading ? (
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {(media ?? []).filter((m) => String(m.mimeType ?? '').startsWith('image/')).map((item) => (
+              <button
+                key={item._id}
+                type="button"
+                onClick={() => onSelect(item.url)}
+                className="group relative overflow-hidden rounded-lg border border-border transition hover:border-primary"
+              >
+                <img src={item.url} alt={item.altText ?? item.originalName} className="h-24 w-full object-cover" />
+                <span className="absolute inset-x-0 bottom-0 truncate bg-black/60 px-1 py-0.5 text-[10px] text-white opacity-0 transition group-hover:opacity-100">
+                  {item.originalName}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

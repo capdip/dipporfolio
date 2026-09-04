@@ -1,0 +1,4 @@
+◇ injected env (9) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+{"ts":"2026-08-24T21:03:37.748Z","level":"info","service":"portfolio-api","message":"Connected to MongoDB database: portfolio_db"}
+{"ts":"2026-08-24T21:03:38.119Z","level":"info","service":"portfolio-api","message":"Connected to MongoDB with 26 collections."}
+{"ts":"2026-08-24T21:03:38.123Z","level":"info","service":"portfolio-api","message":"Server running on port 5000","meta":{"environment":"development"}}

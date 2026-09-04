@@ -1,0 +1,4 @@
+◇ injected env (9) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+{"ts":"2026-08-23T21:02:49.379Z","level":"info","service":"portfolio-api","message":"Server running on port 5000","meta":{"environment":"development"}}
+{"ts":"2026-08-23T21:06:59.760Z","level":"info","service":"portfolio-api","message":"Record created","meta":{"resource":"blog","id":"mem_mt6ash80_4_mq61x2"}}
+{"ts":"2026-08-23T21:06:59.767Z","level":"info","service":"portfolio-api","message":"Record deleted","meta":{"resource":"blog","id":"mem_mt6ash80_4_mq61x2"}}
