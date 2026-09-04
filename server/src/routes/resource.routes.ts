@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
-import { authenticate, requireStaff, type AuthRequest } from '../middleware/auth.middleware';
-import { recordAudit } from '../services/audit.service';
+import { authenticate, requireStaff, type AuthRequest } from '../middleware/auth.middleware.js';
+import { recordAudit } from '../services/audit.service.js';
 import {
   createRecord,
   deleteRecord,

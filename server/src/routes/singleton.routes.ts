@@ -1,8 +1,8 @@
 import { Router, type Response, type NextFunction } from 'express';
-import { getDb } from '../db/database';
-import { authenticate } from '../middleware/auth.middleware';
-import { recordAudit } from '../services/audit.service';
-import type { AuthRequest } from '../middleware/auth.middleware';
+import { getDb } from '../db/database.js';
+import { authenticate } from '../middleware/auth.middleware.js';
+import { recordAudit } from '../services/audit.service.js';
+import type { AuthRequest } from '../middleware/auth.middleware.js';
 
 /**
  * Singleton content endpoints (hero / about): one active document per collection.

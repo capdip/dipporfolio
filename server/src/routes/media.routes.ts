@@ -3,12 +3,12 @@ import fs from 'fs';
 import crypto from 'crypto';
 import multer from 'multer';
 import { Router, type Response, type NextFunction } from 'express';
-import { getDb } from '../db/database';
-import { getEnv } from '../config/env';
-import { authenticate, requireStaff, type AuthRequest } from '../middleware/auth.middleware';
-import { badRequest, notFound } from '../lib/errors';
-import { mediaMetadataSchema } from '../validation/schemas';
-import { recordAudit } from '../services/audit.service';
+import { getDb } from '../db/database.js';
+import { getEnv } from '../config/env.js';
+import { authenticate, requireStaff, type AuthRequest } from '../middleware/auth.middleware.js';
+import { badRequest, notFound } from '../lib/errors.js';
+import { mediaMetadataSchema } from '../validation/schemas.js';
+import { recordAudit } from '../services/audit.service.js';
 
 const router = Router();
 

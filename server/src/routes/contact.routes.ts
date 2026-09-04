@@ -1,10 +1,10 @@
 import { Router, type Response, type NextFunction } from 'express';
-import { getDb } from '../db/database';
-import { authenticate, requireStaff } from '../middleware/auth.middleware';
-import { contactRateLimiter } from '../middleware/rate-limit.middleware';
-import { contactSubmissionSchema, contactMessageAdminSchema } from '../validation/schemas';
-import { badRequest, notFound } from '../lib/errors';
-import type { AuthRequest } from '../middleware/auth.middleware';
+import { getDb } from '../db/database.js';
+import { authenticate, requireStaff } from '../middleware/auth.middleware.js';
+import { contactRateLimiter } from '../middleware/rate-limit.middleware.js';
+import { contactSubmissionSchema, contactMessageAdminSchema } from '../validation/schemas.js';
+import { badRequest, notFound } from '../lib/errors.js';
+import type { AuthRequest } from '../middleware/auth.middleware.js';
 
 const router = Router();
 

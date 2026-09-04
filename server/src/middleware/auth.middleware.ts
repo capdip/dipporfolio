@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { getEnv } from '../config/env';
-import { unauthorized, forbidden } from '../lib/errors';
+import { getEnv } from '../config/env.js';
+import { unauthorized, forbidden } from '../lib/errors.js';
 
 export interface AuthUser {
   userId: string;

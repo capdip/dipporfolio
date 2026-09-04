@@ -1,13 +1,13 @@
 import { Router, type Response, type NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { getEnv } from '../config/env';
-import { getDb } from '../db/database';
-import { authenticate, requireAdmin, signToken, type AuthRequest } from '../middleware/auth.middleware';
-import { verifyPassword, hashPassword } from '../lib/password';
-import { unauthorized, notFound, badRequest, forbidden } from '../lib/errors';
-import { loginSchema, createUserSchema, updateUserSchema } from '../validation/schemas';
-import { recordAudit, ensureAdminUser } from '../services/audit.service';
-import { loginRateLimiter } from '../middleware/rate-limit.middleware';
+import { getEnv } from '../config/env.js';
+import { getDb } from '../db/database.js';
+import { authenticate, requireAdmin, signToken, type AuthRequest } from '../middleware/auth.middleware.js';
+import { verifyPassword, hashPassword } from '../lib/password.js';
+import { unauthorized, notFound, badRequest, forbidden } from '../lib/errors.js';
+import { loginSchema, createUserSchema, updateUserSchema } from '../validation/schemas.js';
+import { recordAudit, ensureAdminUser } from '../services/audit.service.js';
+import { loginRateLimiter } from '../middleware/rate-limit.middleware.js';
 
 const router = Router();
 

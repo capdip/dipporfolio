@@ -1,7 +1,7 @@
 import { Router, type Response, type NextFunction } from 'express';
-import { getDb } from '../db/database';
-import { authenticate, requireAdmin, type AuthRequest } from '../middleware/auth.middleware';
-import { getEnv } from '../config/env';
+import { getDb } from '../db/database.js';
+import { authenticate, requireAdmin, type AuthRequest } from '../middleware/auth.middleware.js';
+import { getEnv } from '../config/env.js';
 
 const router = Router();
 
