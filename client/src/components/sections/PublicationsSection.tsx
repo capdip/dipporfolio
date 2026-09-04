@@ -44,52 +44,71 @@ export default function PublicationsSection() {
               <ul className="space-y-4">
                 {(byYear.get(year) ?? []).map((publication, index) => (
                   <Reveal key={publication._id ?? publication.title} delay={index * 0.04} as="li">
-                    <article className="panel p-5 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge tone="primary">{publication.year}</Badge>
-                        <Badge tone="accent">{publication.publicationType}</Badge>
-                        {publication.publisher ? (
-                          <span className="text-xs text-faint">{publication.publisher}</span>
-                        ) : null}
-                      </div>
-                      <Link
-                        to={`/publications/${publication._id}`}
-                        className="mt-2 block font-heading text-base font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
-                      >
-                        {publication.title}
-                      </Link>
-                      <p className="mt-1 text-sm text-muted">{publication.authors.join(', ')}</p>
-                      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-                        {publication.doi ? (
-                          <a
-                            href={`https://doi.org/${publication.doi}`}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="font-medium text-primary underline-offset-4 hover:underline"
-                          >
-                            DOI: {publication.doi}
-                          </a>
-                        ) : null}
-                        {publication.url ? (
-                          <a
-                            href={publication.url}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="font-medium text-accent underline-offset-4 hover:underline"
-                          >
-                            Publisher link
-                          </a>
-                        ) : null}
-                        {publication.pdf ? (
-                          <a
-                            href={publication.pdf}
-                            target="_blank"
-                            rel="noreferrer noopener"
-                            className="font-medium text-muted underline-offset-4 hover:underline"
-                          >
-                            PDF
-                          </a>
-                        ) : null}
+                    <article className="panel overflow-hidden p-0 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+                      {publication.coverImage ? (
+                        <Link
+                          to={`/publications/${publication._id}`}
+                          className="block aspect-[16/9] w-full overflow-hidden bg-elevated"
+                          aria-label={`View publication: ${publication.title}`}
+                        >
+                          <img
+                            src={publication.coverImage}
+                            alt={`Cover of ${publication.title}`}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition duration-300 hover:scale-105"
+                          />
+                        </Link>
+                      ) : null}
+                      <div className="p-5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge tone="primary">{publication.year}</Badge>
+                          <Badge tone="accent">{publication.publicationType}</Badge>
+                          {publication.researchArea ? (
+                            <Badge tone="neutral">{publication.researchArea}</Badge>
+                          ) : null}
+                          {publication.publisher ? (
+                            <span className="text-xs text-faint">{publication.publisher}</span>
+                          ) : null}
+                        </div>
+                        <Link
+                          to={`/publications/${publication._id}`}
+                          className="mt-2 block font-heading text-base font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                        >
+                          {publication.title}
+                        </Link>
+                        <p className="mt-1 text-sm text-muted">{publication.authors.join(', ')}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
+                          {publication.doi ? (
+                            <a
+                              href={`https://doi.org/${publication.doi}`}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="font-medium text-primary underline-offset-4 hover:underline"
+                            >
+                              DOI: {publication.doi}
+                            </a>
+                          ) : null}
+                          {publication.url ? (
+                            <a
+                              href={publication.url}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="font-medium text-accent underline-offset-4 hover:underline"
+                            >
+                              Publisher link
+                            </a>
+                          ) : null}
+                          {publication.pdf ? (
+                            <a
+                              href={publication.pdf}
+                              target="_blank"
+                              rel="noreferrer noopener"
+                              className="font-medium text-muted underline-offset-4 hover:underline"
+                            >
+                              PDF
+                            </a>
+                          ) : null}
+                        </div>
                       </div>
                     </article>
                   </Reveal>
