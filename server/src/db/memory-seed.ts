@@ -15,11 +15,11 @@ import {
   researchSeed,
   skillSeed,
   trainingSeed,
-} from '../data/cv-seed-data';
-import { siteSettingsSeed } from '../data/site-seed';
-import { getEnv } from '../config/env';
-import { hashPassword } from '../lib/password';
-import { memDb } from './memory-backend';
+} from '../data/cv-seed-data.js';
+import { siteSettingsSeed } from '../data/site-seed.js';
+import { getEnv } from '../config/env.js';
+import { hashPassword } from '../lib/password.js';
+import { memDb } from './memory-backend.js';
 
 const sampleBlogPosts: BlogPost[] = [
   {
