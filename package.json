@@ -9,7 +9,7 @@
     "dev:client": "npm run dev --prefix client",
     "build": "npm run build --prefix client",
     "build:server": "tsc --noEmit",
-    "vercel-build": "npm run build --prefix client",
+    "vercel-build": "npm install --prefix client && npm run build --prefix client",
     "start": "cross-env NODE_ENV=production tsx server/src/index.ts",
     "lint": "oxlint client/src server/src shared",
     "typecheck": "tsc --noEmit && npm run typecheck --prefix client",
