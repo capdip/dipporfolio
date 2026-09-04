@@ -1,7 +1,7 @@
 import type { Request } from 'express';
-import { getDb } from '../db/database';
-import type { AuthRequest } from '../middleware/auth.middleware';
-import { getEnv } from '../config/env';
+import { getDb } from '../db/database.js';
+import type { AuthRequest } from '../middleware/auth.middleware.js';
+import { getEnv } from '../config/env.js';
 
 export interface AuditContext {
   req: Request;
@@ -33,7 +33,7 @@ export const recordAudit = async (ctx: AuditContext): Promise<void> => {
 
 export const ensureAdminUser = async (): Promise<{ email: string; created: boolean }> => {
   const env = getEnv();
-  const { hashPassword } = await import('../lib/password');
+  const { hashPassword } = await import('../lib/password.js');
   const db = getDb();
   const users = db.collection('users');
   const existing = await users.findOne({ email: env.ADMIN_EMAIL });

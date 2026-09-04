@@ -1,7 +1,7 @@
 import type { ZodType } from 'zod';
-import { getDb } from '../db/database';
-import { notFound } from '../lib/errors';
-import { logger } from '../lib/logger';
+import { getDb } from '../db/database.js';
+import { notFound } from '../lib/errors.js';
+import { logger } from '../lib/logger.js';
 
 export interface ResourceConfig {
   /** Route mount path AND collection name, e.g. "publications". */
