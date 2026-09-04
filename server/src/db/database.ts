@@ -403,6 +403,11 @@ const doConnect = async (): Promise<void> => {
       serverSelectionTimeoutMS: HEALTH_TIMEOUT_MS,
       connectTimeoutMS: HEALTH_TIMEOUT_MS,
       socketTimeoutMS: HEALTH_TIMEOUT_MS,
+      // Vercel serverless needs these options
+      maxPoolSize: 1,
+      minPoolSize: 0,
+      maxIdleTimeMS: 10000,
+      waitQueueTimeoutMS: 5000,
     });
 
     await client.connect();

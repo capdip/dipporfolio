@@ -74,13 +74,18 @@ app.use((req: Request, res: Response, _next: NextFunction) => {
 
 app.get('/api/health', async (_req: Request, res: Response) => {
   const dbHealth = await checkDatabaseHealth();
+  const dbUri = env.MONGODB_URI;
+  // Mask credentials in the URI for safe logging
+  const maskedUri = dbUri ? dbUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') : 'not set';
 
   res.status(dbHealth.ok ? 200 : 503).json({
     status: dbHealth.ok ? 'ok' : 'degraded',
     database: dbHealth.ok ? 'connected' : 'unreachable',
-    storage: env.MONGODB_URI ? 'mongodb' : 'in-memory (data will not persist between requests)',
+    storage: dbUri ? 'mongodb' : 'in-memory (data will not persist between requests)',
+    mongoUri: maskedUri,
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
+    vercelEnv: process.env.VERCEL_ENV ?? 'unknown',
     ...(dbHealth.error ? { error: dbHealth.error } : {}),
     ...(dbHealth.collections
       ? { collections: dbHealth.collections }
