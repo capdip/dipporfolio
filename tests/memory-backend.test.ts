@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { MemDb, MemCollection } from '../server/src/db/memory-backend';
+import { MemDb, MemCollection } from '../server/src/db/memory-backend.js';
 
 describe('MemDb', () => {
   let db: MemDb;

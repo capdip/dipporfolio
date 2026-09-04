@@ -11,7 +11,7 @@ import {
   reorderRecords,
   type ResourceConfig,
 } from '../server/src/services/collection.service';
-import { educationSchema, publicationSchema, blogPostSchema, researchSchema } from '../server/src/validation/schemas';
+import { educationSchema, publicationSchema, blogPostSchema, researchSchema } from '../server/src/validation/schemas.js';
 
 const educationConfig: ResourceConfig = {
   name: 'test_education',

@@ -14,10 +14,10 @@
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
-import { getDb, checkDatabaseHealth, connectToMongoDB } from '../db/database';
-import { getEnv } from '../config/env';
-import { logger } from '../lib/logger';
-import { ensureAdminUser } from '../services/audit.service';
+import { getDb, checkDatabaseHealth, connectToMongoDB } from '../db/database.js';
+import { getEnv } from '../config/env.js';
+import { logger } from '../lib/logger.js';
+import { ensureAdminUser } from '../services/audit.service.js';
 import {
   aboutSeed,
   educationSeed,

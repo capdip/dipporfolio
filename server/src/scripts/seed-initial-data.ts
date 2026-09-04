@@ -1,7 +1,7 @@
 import path from 'path';
 import dotenv from 'dotenv';
-import { getDb } from '../db/database';
-import { hashPassword } from '../lib/password';
+import { getDb } from '../db/database.js';
+import { hashPassword } from '../lib/password.js';
 
 // Load environment variables
 dotenv.config({ path: path.join(process.cwd(), '.env') });

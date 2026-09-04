@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { AppError } from '../lib/errors';
-import { logger } from '../lib/logger';
+import { AppError } from '../lib/errors.js';
+import { logger } from '../lib/logger.js';
 import { isProduction } from '../config/env.js';
 
 interface ErrorBody {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitize } from '../lib/sanitize';
+import { sanitize } from '../lib/sanitize.js';
 
 describe('sanitize', () => {
   it('redacts sensitive top-level keys', () => {

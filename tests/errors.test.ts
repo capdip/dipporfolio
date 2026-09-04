@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AppError, badRequest, unauthorized, forbidden, notFound, conflict, tooManyRequests } from '../server/src/lib/errors';
+import { AppError, badRequest, unauthorized, forbidden, notFound, conflict, tooManyRequests } from '../server/src/lib/errors.js';
 
 describe('AppError', () => {
   it('has statusCode and code', () => {
