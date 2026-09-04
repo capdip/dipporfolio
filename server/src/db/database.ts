@@ -306,11 +306,12 @@ class MongoCollectionWrapper {
       } as any
     );
 
-    if (!result) {
+    // MongoDB driver v7 returns ModifyResult { value: doc, ok: number }
+    const doc = (result as any)?.value ?? result;
+
+    if (!doc) {
       return null;
     }
-
-    const doc = result as any;
 
     return {
       ...doc,
