@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../lib/api';
 import { useAllRecords, useMedia } from '../../hooks/useContent';
@@ -37,17 +37,79 @@ const emptyPost = (): Partial<BlogPost> => ({
 });
 
 const FONT_OPTIONS = [
-  { value: 'Merriweather', label: 'Merriweather (Serif - Recommended)' },
-  { value: 'Georgia', label: 'Georgia (Serif)' },
-  { value: 'Playfair Display', label: 'Playfair Display (Display)' },
+  { value: 'Merriweather', label: 'Merriweather (Serif)' },
+  { value: 'Playfair Display', label: 'Playfair Display (Elegant)' },
   { value: 'Lora', label: 'Lora (Serif)' },
-  { value: 'PT Serif', label: 'PT Serif' },
-  { value: 'Inter', label: 'Inter (Sans-serif)' },
-  { value: 'Roboto', label: 'Roboto' },
-  { value: 'Open Sans', label: 'Open Sans' },
-  { value: 'Lato', label: 'Lato' },
-  { value: 'Source Sans Pro', label: 'Source Sans Pro' },
+  { value: 'Inter', label: 'Inter (Modern Sans)' },
+  { value: 'Roboto', label: 'Roboto (Clean Sans)' },
+  { value: 'Source Serif 4', label: 'Source Serif 4 (Serif)' },
+  { value: 'EB Garamond', label: 'EB Garamond (Classic)' },
+  { value: 'Crimson Text', label: 'Crimson Text (Book)' },
+  { value: 'Nunito', label: 'Nunito (Rounded Sans)' },
+  { value: 'Montserrat', label: 'Montserrat (Geometric)' },
 ];
+
+// Google Fonts that need to be loaded dynamically
+const GOOGLE_FONTS = [
+  'Merriweather',
+  'Playfair Display',
+  'Lora',
+  'Inter',
+  'Roboto',
+  'Source Serif 4',
+  'EB Garamond',
+  'Crimson Text',
+  'Nunito',
+  'Montserrat',
+];
+
+/** Load Google Fonts dynamically */
+function loadGoogleFont(fontName: string) {
+  if (!GOOGLE_FONTS.includes(fontName)) return;
+  const linkId = `google-font-${fontName.replace(/\s+/g, '-').toLowerCase()}`;
+  if (document.getElementById(linkId)) return;
+  const link = document.createElement('link');
+  link.id = linkId;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName).replace(/%20/g, '+')}:ital,wght@0,400;0,700;1,400;1,700&display=swap`;
+  document.head.appendChild(link);
+}
+
+// Preload all Google Fonts on module load
+if (typeof window !== 'undefined') {
+  GOOGLE_FONTS.forEach(loadGoogleFont);
+}
+
+const STORAGE_KEY = 'blog_editor_draft';
+
+/** Save draft to sessionStorage */
+function saveDraft(values: Partial<BlogPost>, editingId: string | null) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ values, editingId }));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Load draft from sessionStorage */
+function loadDraft(): { values: Partial<BlogPost>; editingId: string | null } | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/** Clear draft from sessionStorage */
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Sanitize a string into a valid URL slug */
 function sanitizeSlug(input: string): string {
@@ -77,6 +139,23 @@ export default function BlogEditor() {
   const [mediaPickerTarget, setMediaPickerTarget] = useState<'coverImage' | 'featuredImage'>('coverImage');
   const postsQuery = useAllRecords<BlogPost>('blog');
 
+  // Restore draft from sessionStorage on mount
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft && draft.values?.content) {
+      setValues(draft.values);
+      setEditingId(draft.editingId);
+      setEditorOpen(true);
+    }
+  }, []);
+
+  // Auto-save draft to sessionStorage when values change
+  useEffect(() => {
+    if (values.content || values.title) {
+      saveDraft(values, editingId);
+    }
+  }, [values, editingId]);
+
   const invalidate = () => void queryClient.invalidateQueries({ queryKey: ['resource', 'blog', 'all'] });
 
   const createMutation = useMutation({
@@ -84,6 +163,9 @@ export default function BlogEditor() {
     onSuccess: () => {
       invalidate();
       setEditorOpen(false);
+      clearDraft();
+      setValues(emptyPost());
+      setEditingId(null);
       setBanner({ tone: 'success', message: 'Blog post created.' });
     },
     onError: (err) =>
@@ -96,6 +178,9 @@ export default function BlogEditor() {
     onSuccess: () => {
       invalidate();
       setEditorOpen(false);
+      clearDraft();
+      setValues(emptyPost());
+      setEditingId(null);
       setBanner({ tone: 'success', message: 'Blog post updated.' });
     },
     onError: (err) =>
@@ -136,6 +221,7 @@ export default function BlogEditor() {
     setValues(emptyPost());
     setFormError(null);
     setTagInput('');
+    clearDraft();
     setEditorOpen(true);
   };
 
@@ -144,6 +230,8 @@ export default function BlogEditor() {
     setValues({ ...post });
     setFormError(null);
     setTagInput('');
+    // Clear any existing draft when opening a fresh edit
+    clearDraft();
     setEditorOpen(true);
   };
 

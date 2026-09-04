@@ -7,6 +7,32 @@ import { api } from '../lib/api';
 import { formatDate } from '../lib/format';
 import { keys } from '../hooks/useContent';
 import { resolveImageUrl } from '../lib/resolveImageUrl';
+
+// Google Fonts that can be used for blog content
+const GOOGLE_FONT_NAMES = [
+  'Merriweather',
+  'Playfair Display',
+  'Lora',
+  'Inter',
+  'Roboto',
+  'Source Serif 4',
+  'EB Garamond',
+  'Crimson Text',
+  'Nunito',
+  'Montserrat',
+];
+
+/** Dynamically load a Google Font */
+function loadGoogleFont(fontName: string) {
+  if (!GOOGLE_FONT_NAMES.includes(fontName)) return;
+  const linkId = `google-font-${fontName.replace(/\s+/g, '-').toLowerCase()}`;
+  if (document.getElementById(linkId)) return;
+  const link = document.createElement('link');
+  link.id = linkId;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName).replace(/%20/g, '+')}:ital,wght@0,400;0,700;1,400;1,700&display=swap`;
+  document.head.appendChild(link);
+}
 import {
   Badge,
   ErrorState,
@@ -124,6 +150,13 @@ export default function BlogPostPage() {
   });
 
   const post: BlogPost | undefined = postQuery.data;
+
+  // Load Google Font when post has a contentFont
+  useEffect(() => {
+    if (post?.contentFont) {
+      loadGoogleFont(post.contentFont);
+    }
+  }, [post?.contentFont]);
 
   useEffect(() => {
     if (post) {

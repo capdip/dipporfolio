@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Project, Publication } from '../../../shared/types';
 import { api } from '../lib/api';
 import { formatDateRange } from '../lib/format';
-import { keys, useResource } from '../hooks/useContent';
+import { keys } from '../hooks/useContent';
 import { resolveImageUrl } from '../lib/resolveImageUrl';
 import {
   Badge,
@@ -34,7 +34,6 @@ export default function ProjectDetailPage() {
     enabled: Boolean(id),
     retry: false,
   });
-  const publicationsQuery = useResource<Publication>('publications');
 
   if (projectQuery.isPending) {
     return (
@@ -71,24 +70,9 @@ export default function ProjectDetailPage() {
   }
 
   const project: Project = projectQuery.data;
-  const relatedRefs = project.relatedPublications ?? [];
-  // Normalize references for flexible matching (case-insensitive, trimmed)
-  const normalizedRefs = relatedRefs.map((r) => r.trim().toLowerCase());
-  // relatedPublications may reference publications by _id OR by title.
-  // Use flexible matching: exact _id match OR case-insensitive title match.
-  const relatedPublications = (publicationsQuery.data ?? []).filter((publication) => {
-    if (!publication) return false;
-    // Match by _id (exact)
-    if (publication._id && relatedRefs.includes(publication._id)) return true;
-    // Match by title (case-insensitive, trimmed)
-    const pubTitle = publication.title?.trim().toLowerCase();
-    if (pubTitle && normalizedRefs.includes(pubTitle)) return true;
-    // Partial match: check if any ref is contained in the title or vice versa
-    return normalizedRefs.some(
-      (ref) =>
-        pubTitle && (pubTitle.includes(ref) || ref.includes(pubTitle))
-    );
-  });
+  // Use server-resolved related publications (includes hidden publications)
+  const resolvedPubs = (project as unknown as Record<string, unknown>)._resolvedRelatedPublications as Publication[] | undefined;
+  const relatedPublications = resolvedPubs ?? [];
 
   return (
     <main id="main-content">
