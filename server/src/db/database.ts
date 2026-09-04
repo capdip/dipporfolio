@@ -1,4 +1,4 @@
-﻿import { MongoClient, type Db as MongoDb, type Collection as MongoCollection, type FindOptions as MongoFindOptions } from 'mongodb';
+import { MongoClient, type Db as MongoDb, type Collection as MongoCollection, type FindOptions as MongoFindOptions } from 'mongodb';
 import { getEnv } from '../config/env';
 import { logger } from '../lib/logger';
 import { memDb } from './memory-backend';
@@ -9,6 +9,7 @@ let client: MongoClient | null = null;
 let cachedDb: MongoDb | null = null;
 let degraded = false;
 let seedPromise: Promise<void> | null = null;
+let connectionPromise: Promise<void> | null = null;
 
 const generateId = (): string => crypto.randomBytes(12).toString('hex');
 
@@ -185,14 +186,28 @@ export const getDb = (): any => {
 
 const HEALTH_TIMEOUT_MS = 10000;
 
+
 export const connectToMongoDB = async (): Promise<void> => {
+  // Reuse in-flight connection to avoid race conditions in serverless.
+  if (connectionPromise) return connectionPromise;
+  connectionPromise = doConnect();
+  try {
+    await connectionPromise;
+  } finally {
+    connectionPromise = null;
+  }
+};
+
+const doConnect = async (): Promise<void> => {
   const env = getEnv();
   if (!env.MONGODB_URI) {
-    logger.warn('MONGODB_URI not set â€” falling back to in-memory store');
+    logger.warn('MONGODB_URI not set � falling back to in-memory store');
     degraded = true;
     await ensureSeeded();
     return;
   }
+  // Already connected? Nothing to do.
+  if (client && cachedDb && wrappedDb) return;
   try {
     client = new MongoClient(env.MONGODB_URI);
     await client.connect();
@@ -203,11 +218,11 @@ export const connectToMongoDB = async (): Promise<void> => {
     // Auto-seed if database is empty
     const collections = await wrappedDb.listCollections();
     if (collections.length === 0) {
-      logger.info('MongoDB database is empty â€” running auto-seed...');
+      logger.info('MongoDB database is empty � running auto-seed...');
       await autoSeedMongoDB();
     }
   } catch (error) {
-    logger.error('Failed to connect to MongoDB â€” falling back to in-memory store', { error: String(error) });
+    logger.error('Failed to connect to MongoDB � falling back to in-memory store', { error: String(error) });
     degraded = true;
     await ensureSeeded();
   }
@@ -352,7 +367,7 @@ const autoSeedMongoDB = async (): Promise<void> => {
 export const checkDatabaseHealth = async (): Promise<{ ok: boolean; collections?: string[]; error?: string }> => {
   if (degraded || !wrappedDb) {
     await ensureSeeded();
-    return { ok: false, error: 'MongoDB not connected â€” serving bundled seed data from memory.' };
+    return { ok: false, error: 'MongoDB not connected — serving bundled seed data from memory.' };
   }
   try {
     const collections = await Promise.race([

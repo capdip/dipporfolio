@@ -4,6 +4,8 @@ import fs from 'fs';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+const isVercel = process.env.VERCEL === '1';
+
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 if (!process.env.JWT_SECRET) {
   // Second attempt: repo-root .env when running via tsx from server/ cwd.
@@ -160,29 +162,38 @@ if (fs.existsSync(clientDist)) {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-const start = async (): Promise<void> => {
-  try {
-    await connectToMongoDB();
-    const health = await checkDatabaseHealth();
-    if (!health.ok) {
-      logger.warn('Database unreachable at boot — API will serve degraded until it reconnects.');
-    } else {
-      logger.info(`Connected to MongoDB with ${health.collections?.length ?? 0} collections.`);
+// On Vercel, the server runs as a serverless function — no app.listen() needed.
+// Connect to MongoDB lazily on first request to avoid cold-start penalties.
+if (!isVercel) {
+  const start = async (): Promise<void> => {
+    try {
+      await connectToMongoDB();
+      const health = await checkDatabaseHealth();
+      if (!health.ok) {
+        logger.warn('Database unreachable at boot — API will serve degraded until it reconnects.');
+      } else {
+        logger.info(`Connected to MongoDB with ${health.collections?.length ?? 0} collections.`);
+      }
+      app.listen(env.PORT, () => {
+        logger.info(`Server running on port ${env.PORT}`, { environment: env.NODE_ENV });
+      });
+    } catch (error) {
+      logger.error('Fatal startup error', { error: String(error) });
+      process.exit(1);
     }
-    app.listen(env.PORT, () => {
-      logger.info(`Server running on port ${env.PORT}`, { environment: env.NODE_ENV });
-    });
-  } catch (error) {
-    logger.error('Fatal startup error', { error: String(error) });
-    process.exit(1);
-  }
-};
+  };
 
-start()
-  .then(() => logger.debug('startup sequence complete'))
-  .catch((error: unknown) => {
-    logger.error('Unhandled startup failure', { error: String(error) });
-    process.exit(1);
+  start()
+    .then(() => logger.debug('startup sequence complete'))
+    .catch((error: unknown) => {
+      logger.error('Unhandled startup failure', { error: String(error) });
+      process.exit(1);
+    });
+} else {
+  // Vercel: connect to DB on first invocation (non-blocking).
+  void connectToMongoDB().catch((err) => {
+    logger.warn('Initial MongoDB connection failed — will retry on first request', { error: String(err) });
   });
+}
 
 export default app;

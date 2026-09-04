@@ -1,0 +1,10 @@
+.env
+node_modules
+*.log
+tests/
+vitest.config.ts
+README.md
+client/node_modules
+dev-*.log
+server-*.log
+.vercel
