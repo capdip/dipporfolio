@@ -231,6 +231,7 @@ const FieldControl = ({
           placeholder={field.placeholder || ''}
           onChange={(e) => onChange(e.target.value)}
           rows={field.type === 'richtext' ? 8 : 4}
+          className="min-h-[100px]"
         />
       );
     case 'number':

@@ -67,8 +67,10 @@ export default function AboutEditor() {
       void queryClient.invalidateQueries({ queryKey: keys.settings });
       setBanner({ tone: 'success', message: 'About section saved.' });
     },
-    onError: (err) =>
-      setBanner({ tone: 'error', message: err instanceof Error ? err.message : 'Save failed.' }),
+    onError: (err) => {
+      console.error('Save error:', err);
+      setBanner({ tone: 'error', message: err instanceof Error ? err.message : 'Save failed.' });
+    },
   });
 
   const uploadMutation = useMutation({
@@ -83,8 +85,10 @@ export default function AboutEditor() {
       saveMutation.mutate({ images: next });
       setBanner({ tone: 'success', message: `${media.length} photo(s) uploaded and saved.` });
     },
-    onError: (err) =>
-      setBanner({ tone: 'error', message: err instanceof Error ? err.message : 'Upload failed.' }),
+    onError: (err) => {
+      console.error('Upload error:', err);
+      setBanner({ tone: 'error', message: err instanceof Error ? err.message : 'Upload failed.' });
+    },
   });
 
   const removePhoto = (index: number) => {
@@ -171,16 +175,19 @@ export default function AboutEditor() {
             ) : null}
             <TextInput
               value={profileImage}
-              onChange={(e) => setProfileImage(e.target.value)}
+              onChange={(e) => {
+                setProfileImage(e.target.value);
+                // Auto-save on change for immediate feedback
+                saveMutation.mutate({});
+              }}
               placeholder="Image URL (leave empty for none)"
               className="min-w-0 flex-1"
-              onBlur={() => saveMutation.mutate({})}
             />
             <button
               type="button"
               onClick={() => {
                 setProfileImage('');
-                // Auto-save the deletion
+                // Auto-save the deletion immediately
                 saveMutation.mutate({});
               }}
               className="shrink-0 rounded-lg border border-danger/40 px-3 py-2 text-xs font-medium text-danger transition hover:bg-danger/10"
@@ -217,6 +224,18 @@ export default function AboutEditor() {
               <TextInput
                 value={newPhotoUrl}
                 onChange={(e) => setNewPhotoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newPhotoUrl.trim()) {
+                      const next = [...photos, newPhotoUrl.trim()];
+                      setPhotos(next);
+                      setNewPhotoUrl('');
+                      // Auto-save after adding
+                      saveMutation.mutate({ images: next });
+                    }
+                  }
+                }}
                 placeholder="Paste an image URL and press Add"
               />
               <button

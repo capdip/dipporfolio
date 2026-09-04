@@ -167,7 +167,14 @@ export const TagsInput = ({
             onChange(value.slice(0, -1));
           }
         }}
-        onBlur={commit}
+        onBlur={() => {
+          // Only commit if there's content to avoid empty commits
+          if (draft.trim()) {
+            commit();
+          } else {
+            setDraft('');
+          }
+        }}
         className="min-w-[8rem] flex-1 bg-transparent px-1 py-0.5 text-sm text-foreground placeholder:text-faint focus:outline-none"
       />
     </div>
@@ -204,7 +211,13 @@ export const ImagePickerInput = ({
   return (
     <div ref={wrapperRef} className="relative flex flex-col gap-1.5">
       <div className="flex gap-2">
-        <TextInput id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder="/uploads/... or https://..." />
+        <TextInput 
+          id={id} 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)} 
+          placeholder="/uploads/... or https://..." 
+          className="flex-1"
+        />
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}

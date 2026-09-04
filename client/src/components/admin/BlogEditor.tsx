@@ -187,10 +187,13 @@ export default function BlogEditor() {
     const selected = text.slice(start, end);
     const newText = text.slice(0, start) + prefix + selected + suffix + text.slice(end);
     setValues((v) => ({ ...v, content: newText }));
-    setTimeout(() => {
-      el.focus();
-      el.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-    }, 0);
+    // Use requestAnimationFrame to ensure React has updated the state before focusing
+    requestAnimationFrame(() => {
+      if (contentRef.current) {
+        contentRef.current.focus();
+        contentRef.current.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+      }
+    });
   };
 
   const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -253,6 +256,9 @@ export default function BlogEditor() {
               </span>
               {post.featured && (
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Featured</span>
+              )}
+              {post.status === 'hidden' && (
+                <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">Hidden</span>
               )}
               <a
                 href={`/blog/${post.slug}`}
@@ -461,7 +467,7 @@ export default function BlogEditor() {
                 value={values.content ?? ''}
                 onChange={(e) => setValues((v) => ({ ...v, content: e.target.value }))}
                 className={`${inputClasses} rounded-t-none resize-y`}
-                style={{ fontFamily: `'${values.contentFont ?? 'Inter'}', monospace` }}
+                style={{ fontFamily: values.contentFont === 'Inter' ? 'Inter, system-ui, sans-serif' : values.contentFont }}
               />
             </div>
           </FormField>
