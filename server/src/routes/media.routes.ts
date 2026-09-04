@@ -38,22 +38,12 @@ const uploadDirAbsolute = () => {
   return dir;
 };
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDirAbsolute()),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase().slice(0, 12);
-    const base = path
-      .basename(file.originalname, path.extname(file.originalname))
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]+/g, '-')
-      .slice(0, 60);
-    const unique = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-    cb(null, `${base || 'file'}-${unique}${ext}`);
-  },
-});
-
+// Vercel serverless filesystems are read-only except /tmp, which is ephemeral
+// and wiped between cold starts. So uploaded files are stored as base64 inside
+// MongoDB (the durable source of truth) AND written to disk for local use.
+// They are served from the DB via GET /api/media/:id/file.
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: getEnvSafe().MAX_UPLOAD_MB * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED_MIME.has(file.mimetype)) {
@@ -75,6 +65,30 @@ function getEnvSafe() {
     };
   }
 }
+
+// Build a safe, unique filename from the uploaded original.
+const buildFilename = (originalName: string): string => {
+  const ext = path.extname(originalName).toLowerCase().slice(0, 12);
+  const base = path
+    .basename(originalName, path.extname(originalName))
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, '-')
+    .slice(0, 60);
+  const unique = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  return `${base || 'file'}-${unique}${ext}`;
+};
+
+// Also persist the buffer to disk so local development and existing /uploads
+// paths keep working. On Vercel this write is a best-effort to /tmp (ephemeral).
+const writeToDisk = (filename: string, buffer: Buffer): void => {
+  try {
+    const dir = uploadDirAbsolute();
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, filename), buffer);
+  } catch {
+    // Read-only / ephemeral filesystem — DB is the source of truth.
+  }
+};
 
 type MediaDoc = Record<string, unknown> & { _id: string };
 
@@ -121,20 +135,64 @@ router.post(
       if (!req.file) throw badRequest('No file uploaded (field name must be "file")');
       const meta = mediaMetadataSchema.parse(req.body.metadata ? JSON.parse(req.body.metadata) : {});
       const now = new Date().toISOString();
+      const filename = buildFilename(req.file.originalname);
       const doc = {
-        filename: req.file.filename,
+        filename,
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
-        url: `/uploads/${req.file.filename}`,
+        url: '',
+        contentBase64: req.file.buffer.toString('base64'),
         ...meta,
         visibility: meta.visibility ?? true,
         createdAt: now,
         updatedAt: now,
       };
       const result = await getDb().collection('media').insertOne(doc);
-      await recordAudit({ req, action: 'upload', resource: 'media', resourceId: String(result.insertedId), detail: { filename: doc.filename } });
-      res.status(201).json({ success: true, data: { ...doc, _id: result.insertedId } });
+      // Durable URL that is served from MongoDB (persists on Vercel serverless).
+      const url = `/api/media/${String(result.insertedId)}/file`;
+      await getDb().collection('media').findOneAndUpdate(
+        { _id: String(result.insertedId) },
+        { $set: { url } },
+        { returnDocument: 'after' }
+      );
+      writeToDisk(filename, req.file.buffer);
+      await recordAudit({ req, action: 'upload', resource: 'media', resourceId: String(result.insertedId), detail: { filename } });
+      res.status(201).json({ success: true, data: { ...doc, url, _id: result.insertedId } });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+/** Public file serving backed by MongoDB (durable across serverless cold starts). */
+router.get(
+  '/:id/file',
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const doc = (await getDb().collection('media').findOne({ _id: String(req.params.id) })) as MediaDoc | null;
+      if (!doc) throw notFound('Media not found');
+
+      // Preferred source of truth: base64 stored in MongoDB.
+      if (typeof doc.contentBase64 === 'string' && doc.contentBase64) {
+        const buffer = Buffer.from(doc.contentBase64, 'base64');
+        res.setHeader('Content-Type', String(doc.mimeType ?? 'application/octet-stream'));
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.setHeader('Content-Length', buffer.length);
+        res.send(buffer);
+        return;
+      }
+
+      // Legacy fallback: file on disk.
+      const absolute = path.join(uploadDirAbsolute(), String(doc.filename ?? ''));
+      if (fs.existsSync(absolute)) {
+        res.setHeader('Content-Type', String(doc.mimeType ?? 'application/octet-stream'));
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        res.sendFile(absolute);
+        return;
+      }
+
+      throw notFound('Media file missing');
     } catch (error) {
       next(error);
     }
