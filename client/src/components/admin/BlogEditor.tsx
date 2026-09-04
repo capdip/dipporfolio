@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from '../../lib/api';
-import { keys, useAllRecords } from '../../hooks/useContent';
+import { useAllRecords, useMedia } from '../../hooks/useContent';
 import { resolveImageUrl } from '../../lib/resolveImageUrl';
 import type { BlogPost, MediaItem } from '../../../../shared/types';
 import { EmptyState, ErrorState, Skeleton } from '../ui/primitives';
@@ -530,7 +530,7 @@ function MediaPickerModal({
   onSelect: (url: string) => void;
   onClose: () => void;
 }) {
-  const { data: media, isLoading } = useResource<MediaItem>('media');
+  const { data: media, isLoading } = useMedia();
   const uploadRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useMutation({
     mutationFn: (file: File) => api.uploadMedia(file, { category: 'blog', altText: file.name }),
@@ -566,7 +566,7 @@ function MediaPickerModal({
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {(media ?? []).filter((m) => String(m.mimeType ?? '').startsWith('image/')).map((item) => (
+            {(media ?? []).filter((m: MediaItem) => String(m.mimeType ?? '').startsWith('image/')).map((item: MediaItem) => (
               <button
                 key={item._id}
                 type="button"
