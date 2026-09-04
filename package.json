@@ -2,6 +2,7 @@
   "name": "dipportfolio.github.io",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "3D academic research portfolio + CMS for Dipesh Thapa (React + Express + MongoDB)",
   "scripts": {
     "dev": "concurrently -k -n api,web \"npm:dev:server\" \"npm:dev:client\"",
@@ -27,7 +28,6 @@
   ],
   "author": "Dipesh Thapa",
   "license": "MIT",
-  "type": "commonjs",
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
