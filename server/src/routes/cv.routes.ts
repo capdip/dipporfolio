@@ -12,7 +12,7 @@ import { recordAudit } from '../services/audit.service.js';
 
 const router = Router();
 
-const uploadDirAbsolute = () => {
+const uploadDirAbsolute = (): string => {
   const env = (() => {
     try {
       return getEnv();
@@ -33,17 +33,10 @@ const uploadDirAbsolute = () => {
   return dir;
 };
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDirAbsolute()),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
-    cb(null, `cv-${unique}${ext}`);
-  },
-});
-
+// Store CV files in MongoDB (base64) so they survive Vercel's ephemeral /tmp.
+// We also write to disk locally so legacy dev flows keep working.
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 30 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype !== 'application/pdf') {
@@ -53,6 +46,22 @@ const upload = multer({
     cb(null, true);
   },
 });
+
+const buildFilename = (originalName: string): string => {
+  const ext = path.extname(originalName).toLowerCase();
+  const unique = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  return `cv-${unique}${ext}`;
+};
+
+const writeToDisk = (filename: string, buffer: Buffer): void => {
+  try {
+    const dir = uploadDirAbsolute();
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, filename), buffer);
+  } catch {
+    // Read-only / ephemeral filesystem — DB is the source of truth.
+  }
+};
 
 type CvDoc = Record<string, unknown> & { _id: string; filename?: string };
 
@@ -107,10 +116,23 @@ router.get(
   async (_req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const doc = (await getDb().collection('cv_files').findOne({ active: true })) as CvDoc | null;
-      if (!doc || !doc.isPublic || !doc.filename) throw notFound('No public CV available');
-      const absolute = path.join(uploadDirAbsolute(), String(doc.filename));
-      if (!fs.existsSync(absolute)) throw notFound('CV file missing on disk');
-      res.download(absolute, String(doc.originalName ?? 'CV.pdf'));
+      if (!doc || doc.isPublic === false) throw notFound('No public CV available');
+      const fileName = String(doc.originalName ?? 'CV.pdf');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+      // Preferred: bytes stored in MongoDB (survives serverless cold starts).
+      if (typeof doc.contentBase64 === 'string' && doc.contentBase64) {
+        const buffer = Buffer.from(doc.contentBase64, 'base64');
+        res.setHeader('Content-Length', buffer.length);
+        res.send(buffer);
+        return;
+      }
+
+      // Legacy fallback: file on disk.
+      const absolute = path.join(uploadDirAbsolute(), String(doc.filename ?? ''));
+      if (!fs.existsSync(absolute)) throw notFound('CV file missing');
+      res.sendFile(absolute);
     } catch (error) {
       next(error);
     }
@@ -133,21 +155,24 @@ router.post(
         await getDb().collection('cv_files').updateMany({}, { $set: { active: false } });
       }
       const now = new Date().toISOString();
+      const filename = buildFilename(req.file.originalname);
       const doc = {
-        filename: req.file.filename,
+        filename,
         originalName: req.file.originalname,
         label: meta.label,
         isPublic: meta.isPublic ?? true,
         notes: meta.notes,
         size: req.file.size,
         mimeType: 'application/pdf',
+        contentBase64: req.file.buffer.toString('base64'),
         active: makeActive,
         createdAt: now,
         updatedAt: now,
       };
       const result = await getDb().collection('cv_files').insertOne(doc);
+      writeToDisk(filename, req.file.buffer);
       await recordAudit({ req, action: 'upload_cv', resource: 'cv_files', resourceId: String(result.insertedId) });
-      res.status(201).json({ success: true, data: { ...doc, _id: result.insertedId } });
+      res.status(201).json({ success: true, data: { ...doc, contentBase64: undefined, _id: result.insertedId } });
     } catch (error) {
       next(error);
     }
