@@ -187,13 +187,13 @@ export default function BlogEditor() {
     const selected = text.slice(start, end);
     const newText = text.slice(0, start) + prefix + selected + suffix + text.slice(end);
     setValues((v) => ({ ...v, content: newText }));
-    // Use requestAnimationFrame to ensure React has updated the state before focusing
-    requestAnimationFrame(() => {
+    // Use setTimeout to ensure React has updated the state before focusing
+    setTimeout(() => {
       if (contentRef.current) {
         contentRef.current.focus();
         contentRef.current.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
       }
-    });
+    }, 0);
   };
 
   const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -467,7 +467,7 @@ export default function BlogEditor() {
                 value={values.content ?? ''}
                 onChange={(e) => setValues((v) => ({ ...v, content: e.target.value }))}
                 className={`${inputClasses} rounded-t-none resize-y`}
-                style={{ fontFamily: values.contentFont === 'Inter' ? 'Inter, system-ui, sans-serif' : values.contentFont }}
+                style={{ fontFamily: values.contentFont || 'Inter, system-ui, sans-serif' }}
               />
             </div>
           </FormField>
