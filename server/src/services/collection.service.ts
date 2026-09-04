@@ -82,12 +82,51 @@ export const listAllRecords = async (config: ResourceConfig): Promise<Doc[]> => 
 
 export const getRecordById = async (config: ResourceConfig, id: string): Promise<Doc> => {
   const doc = (await collection(config).findOne({ _id: id })) as Doc | null;
-  if (doc && isPubliclyVisible(config, doc)) return doc;
+  if (doc && isPubliclyVisible(config, doc)) {
+    // For projects, resolve related publications (including hidden ones)
+    if (config.name === 'projects' && doc.relatedPublications && Array.isArray(doc.relatedPublications) && doc.relatedPublications.length > 0) {
+      const resolvedPubs = await resolveRelatedPublications(doc.relatedPublications as string[]);
+      if (resolvedPubs.length > 0) {
+        (doc as Record<string, unknown>)._resolvedRelatedPublications = resolvedPubs;
+      }
+    }
+    return doc;
+  }
   // Fallback: blog posts are addressed by slug rather than _id.
   const bySlug = (await collection(config).findOne({ slug: id })) as Doc | null;
   if (bySlug && isPubliclyVisible(config, bySlug)) return bySlug;
   throw notFound(`${config.name} record not found`);
 };
+
+/**
+ * Resolve related publication references to actual publication documents.
+ * This allows hidden publications to still appear as related publications
+ * on public project pages.
+ */
+async function resolveRelatedPublications(refs: string[]): Promise<Doc[]> {
+  if (!refs || refs.length === 0) return [];
+  const pubCollection = getDb().collection('publications');
+  const normalizedRefs = refs.map((r) => r.trim().toLowerCase());
+
+  // Find all publications (including hidden ones)
+  const allPubs = await pubCollection.find({}).limit(2000).toArray() as Doc[];
+
+  // Match by _id or by title (case-insensitive)
+  const matched = allPubs.filter((pub) => {
+    if (!pub) return false;
+    // Match by _id (exact)
+    if (pub._id && refs.includes(String(pub._id))) return true;
+    // Match by title (case-insensitive, trimmed)
+    const pubTitle = (pub.title as string)?.trim().toLowerCase();
+    if (pubTitle && normalizedRefs.includes(pubTitle)) return true;
+    // Partial match
+    return normalizedRefs.some(
+      (ref) => pubTitle && (pubTitle.includes(ref) || ref.includes(pubTitle))
+    );
+  });
+
+  return matched;
+}
 
 /**
  * A record is publicly visible when:
