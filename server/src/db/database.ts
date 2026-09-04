@@ -25,6 +25,14 @@ let connectionPromise: Promise<void> | null = null;
 let lastMongoError: string | null = null;
 
 const HEALTH_TIMEOUT_MS = 10000;
+// Cold starts on Vercel must resolve DNS + TLS-handshake all 3 Atlas shards,
+// so give server selection generous headroom.
+const SERVER_SELECTION_TIMEOUT_MS = 20000;
+const CONNECT_TIMEOUT_MS = 15000;
+const SOCKET_TIMEOUT_MS = 30000;
+// Throttle self-healing reconnect attempts (per function instance).
+const RECONNECT_INTERVAL_MS = 15000;
+let lastReconnectAttempt = 0;
 
 const generateId = (): string =>
   crypto.randomBytes(12).toString('hex');
@@ -400,9 +408,9 @@ const doConnect = async (): Promise<void> => {
 
   try {
     client = new MongoClient(env.MONGODB_URI, {
-      serverSelectionTimeoutMS: HEALTH_TIMEOUT_MS,
-      connectTimeoutMS: HEALTH_TIMEOUT_MS,
-      socketTimeoutMS: HEALTH_TIMEOUT_MS,
+      serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
+      connectTimeoutMS: CONNECT_TIMEOUT_MS,
+      socketTimeoutMS: SOCKET_TIMEOUT_MS,
       // Vercel serverless needs these options
       maxPoolSize: 1,
       minPoolSize: 0,
@@ -806,6 +814,24 @@ export const checkDatabaseHealth = async (): Promise<{
     } catch (error) {
       lastMongoError = String(error);
       degraded = true;
+    }
+  }
+
+  // SELF-HEALING: a cold-start timeout permanently set `degraded`, which used
+  // to disable all further reconnect attempts. Retry periodically (throttled)
+  // whenever MongoDB is configured, so one slow boot can never break the API
+  // for the lifetime of the function instance.
+  const mongoConfigured = Boolean(getEnv().MONGODB_URI);
+  if ((!wrappedDb || degraded) && mongoConfigured) {
+    const now = Date.now();
+    if (now - lastReconnectAttempt > RECONNECT_INTERVAL_MS) {
+      lastReconnectAttempt = now;
+      try {
+        await connectToMongoDB();
+      } catch (error) {
+        lastMongoError = String(error);
+        degraded = true;
+      }
     }
   }
 
