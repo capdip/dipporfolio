@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSettings, useSaveSettings } from '../../hooks/useContent';
 import { useAuth } from '../../context/Providers';
-import { ApiError } from '../../lib/api';
+import { api, ApiError } from '../../lib/api';
 import type { FooterSettings, SiteSettings, SocialLinks } from '../../../../shared/types';
 import { ErrorState, Skeleton } from '../ui/primitives';
 import {
@@ -100,7 +100,6 @@ export default function SettingsEditor() {
       return;
     }
     try {
-      const { api } = await import('../../lib/api');
       await api.updateUser(user?.id || '', { password: newPassword });
       setBanner({ tone: 'success', message: 'Password updated successfully.' });
       setNewPassword('');

@@ -1,11 +1,17 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { api } from '../lib/api';
 import { CANONICAL_HOME_SECTIONS, resolveSectionComponent } from '../lib/sectionMap';
 import { useAbout, useMedia, useSettings } from '../hooks/useContent';
 import { resolveImageUrl } from '../lib/resolveImageUrl';
-import ScienceHomeScene from '../components/three/ScienceHomeScene';
+
+// The WebGL scene pulls in the large `three` dependency. Loading it lazily keeps
+// the 3D engine (and its ~500 kB chunk) out of the initial route bundle so the
+// rest of the page paints faster. The scene is `aria-hidden` and purely
+// decorative with its own CSS fallback, so a `null` Suspense fallback is safe
+// and invisible to users.
+const ScienceHomeScene = lazy(() => import('../components/three/ScienceHomeScene'));
 
 export default function HomePage() {
   const aboutQuery = useAbout();
@@ -82,7 +88,9 @@ export default function HomePage() {
     <>
       <header ref={heroRef} className="relative isolate flex min-h-[calc(100svh-4rem)] items-center overflow-x-clip">
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 h-full w-full">
-          <ScienceHomeScene imageUrls={mediaImages} className="h-full w-full" />
+          <Suspense fallback={null}>
+            <ScienceHomeScene imageUrls={mediaImages} className="h-full w-full" />
+          </Suspense>
         </div>
         <div aria-hidden="true" className="hairline-grid pointer-events-none absolute inset-0 -z-10 opacity-30" />
 
