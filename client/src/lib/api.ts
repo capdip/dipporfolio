@@ -24,8 +24,12 @@ import type {
   Training,
 } from '../../../shared/types';
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
+// Frontend and backend are served from the SAME Vercel deployment
+// (see /vercel.json rewrites), so requests are always same-origin.
+// Root-relative URLs avoid CORS preflights and the 308 non-www -> www
+// redirect Vercel issues (redirects are not allowed on preflights).
+// Do NOT reintroduce VITE_API_URL here for the API host.
+const API_BASE_URL = '/api';
 
 export class ApiError extends Error {
   readonly status: number;

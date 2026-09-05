@@ -1,5 +1,5 @@
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
+// Same-origin: frontend and API live in one Vercel deployment.
+const API_BASE_URL = '/api';
 
 export const resolveImageUrl = (url: string | undefined | null): string => {
   if (!url) return '';

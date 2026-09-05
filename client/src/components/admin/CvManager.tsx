@@ -25,8 +25,8 @@ export default function CvManager() {
   const [notes, setNotes] = useState('');
   const [downloadUrl, setDownloadUrl] = useState('');
 
-  const API_BASE_URL =
-    (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') + '/api';
+  // Same-origin: frontend and API are served by the same Vercel deployment.
+  const API_BASE_URL = '/api';
 
   useEffect(() => {
     const url = API_BASE_URL + '/cv/download';
