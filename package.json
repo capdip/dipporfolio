@@ -1,47 +1,34 @@
 {
-  "name": "dipportfolio.github.io",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "description": "3D academic research portfolio + CMS for Dipesh Thapa (React + Express + MongoDB)",
-  "scripts": {
-    "dev": "concurrently -k -n api,web \"npm:dev:server\" \"npm:dev:client\"",
-    "dev:server": "tsx watch server/src/index.ts",
-    "dev:client": "npm run dev --prefix client",
-    "build": "npm run build --prefix client && npm run build:server",
-    "build:server": "tsc --noEmit",
-    "start": "tsx server/src/index.ts",
-    "lint": "oxlint client/src server/src shared",
-    "typecheck": "tsc --noEmit && npm run typecheck --prefix client",
-    "test": "vitest run",
-    "seed": "tsx server/src/scripts/seed-cv.ts",
-    "import:cv": "tsx server/src/scripts/seed-cv.ts"
-  },
-  "keywords": ["portfolio", "academic", "research", "cms", "mongodb", "threejs"],
-  "author": "Dipesh Thapa",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^2.0.0",
-    "@types/node": "^26.2.0",
-    "concurrently": "^9.1.2",
-    "cross-env": "^7.0.3",
-    "oxlint": "^1.79.0",
-    "tsx": "^4.23.12",
-    "typescript": "^7.0.2",
-    "vitest": "^3.0.5"
-  },
-  "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "mongodb": "^7.5.0",
-    "multer": "^2.0.2",
-    "zod": "^4.4.3"
-  }
+    "name":  "dipportfolio.github.io",
+    "version":  "1.0.0",
+    "private":  true,
+    "type":  "module",
+    "description":  "3D academic research portfolio + CMS for Dipesh Thapa (React + Express + MongoDB)",
+    "scripts":  {
+                    "dev":  "concurrently -k -n api,web \"npm:dev:server\" \"npm:dev:client\"",
+                    "dev:server":  "tsx watch server/src/index.ts",
+                    "dev:client":  "npm run dev --prefix client",
+                    "build":  "npm run build --prefix client \u0026\u0026 npm run build:server",
+                    "build:server":  "tsc --noEmit",
+                    "start":  "tsx server/src/index.ts",
+                    "lint":  "oxlint client/src server/src shared",
+                    "typecheck":  "tsc --noEmit \u0026\u0026 npm run typecheck --prefix client",
+                    "test":  "vitest run",
+                    "seed":  "tsx server/src/scripts/seed-cv.ts",
+                    "import:cv":  "tsx server/src/scripts/seed-cv.ts"
+                },
+    "keywords":  [
+                     "portfolio",
+                     "academic",
+                     "research",
+                     "cms",
+                     "mongodb",
+                     "threejs"
+                 ],
+    "author":  "Dipesh Thapa",
+    "license":  "MIT",
+    "workspaces":  [
+                       "client",
+                       "server"
+                   ]
 }

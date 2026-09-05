@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd client && rm -rf node_modules && npm install --no-audit --no-fund && npm run build",
+  "buildCommand": "npm install --no-audit --no-fund && npm run build --workspace client",
   "outputDirectory": "client/dist",
   "functions": {
     "api/index.ts": {
