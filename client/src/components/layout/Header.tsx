@@ -159,6 +159,13 @@ export default function Header() {
           >
             Download CV
           </button>
+          <Link
+            to="/admin"
+            onClick={() => setOpen(false)}
+            className="w-full max-w-xs rounded-lg border border-border bg-transparent px-4 py-2 text-center text-base font-semibold text-muted transition hover:border-primary/40 hover:text-primary"
+          >
+            Admin
+          </Link>
         </div>
       </div>
     </header>
