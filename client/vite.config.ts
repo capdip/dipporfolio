@@ -8,8 +8,8 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     proxy: {
-      '/api': { target: 'http://localhost:5000', changeOrigin: true },
-      '/uploads': { target: 'http://localhost:5000', changeOrigin: true },
+      '/api': { target: 'https://dipeshthapa23.com.np', changeOrigin: true },
+      '/uploads': { target: 'https://dipeshthapa23.com.np', changeOrigin: true },
     },
     // Force the browser to always revalidate in dev so a stale/cached bundle
     // can never persist across server restarts (HMR disconnects drop old modules).
