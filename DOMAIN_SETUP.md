@@ -50,9 +50,20 @@ Or for Apex domain (root domain), use A records:
 The following environment variables are configured:
 
 ### Client (`client/.env`)
+
+**Important:** The frontend and API are served from the **same Vercel deployment**
+(the `vercel.json` rewrites route `/api/*` to the API function). Use a
+**root-relative** URL so the browser makes same-origin requests:
+
 ```
-VITE_API_URL=https://dipeshthapa23.com.np
+VITE_API_URL=/
 ```
+
+Do **not** use an absolute URL such as `https://dipeshthapa23.com.np`. That host
+308-redirects to `https://www.dipeshthapa23.com.np`, and the non-`www` origin
+differs from where the app is served, forcing a CORS preflight. Redirects are not
+allowed on preflight requests, which produced:
+`...Redirect is not allowed for a preflight request.`
 
 ### Server (`.env` or Vercel Dashboard)
 ```
@@ -66,7 +77,7 @@ Make sure to set these in your Vercel project settings:
 | Variable                     | Value                                              |
 |------------------------------|----------------------------------------------------|
 | `FRONTEND_URL`               | `https://dipeshthapa23.com.np,https://www.dipeshthapa23.com.np` |
-| `VITE_API_URL`               | `https://dipeshthapa23.com.np`                     |
+| `VITE_API_URL`               | `/` (root-relative; leave unset is also fine)      |
 | `MONGODB_URI`                | Your MongoDB connection string                     |
 | `JWT_SECRET`                 | A secure random string (min 16 chars)              |
 | `JWT_EXPIRES_IN`             | `7d`                                               |
@@ -89,9 +100,9 @@ After configuring DNS and environment variables:
 2. Vercel will automatically deploy the changes
 
 3. Verify the deployment:
-   - Visit `https://dipeshthapa23.com.np`
+   - Visit `https://www.dipeshthapa23.com.np`
    - Check the browser console for any CORS errors
-   - Test the API: `https://dipeshthapa23.com.np/api/health`
+   - Test the API: `https://www.dipeshthapa23.com.np/api/health`
 
 ## Troubleshooting
 

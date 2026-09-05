@@ -8,8 +8,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     proxy: {
-      '/api': { target: 'https://dipeshthapa23.com.np', changeOrigin: true },
-      '/uploads': { target: 'https://dipeshthapa23.com.np', changeOrigin: true },
+      // Non-www host 308-redirects to www; use the canonical host that resolves.
+      '/api': { target: 'https://www.dipeshthapa23.com.np', changeOrigin: true },
+      '/uploads': { target: 'https://www.dipeshthapa23.com.np', changeOrigin: true },
     },
     // Force the browser to always revalidate in dev so a stale/cached bundle
     // can never persist across server restarts (HMR disconnects drop old modules).
