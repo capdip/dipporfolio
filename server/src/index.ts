@@ -44,6 +44,8 @@ const allowedOrigins = [
   ...env.FRONTEND_URL.split(',').map((o) => o.trim()).filter(Boolean),
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'https://dipeshthapa23.com.np',
+  'https://www.dipeshthapa23.com.np',
 ];
 if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
   allowedOrigins.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);

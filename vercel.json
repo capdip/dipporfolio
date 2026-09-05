@@ -1,17 +1,36 @@
-{
-  "version": 2,
-  "buildCommand": "npm install --prefix client --no-audit --no-fund && npm run build --prefix client",
-  "outputDirectory": "client/dist",
-  "functions": {
-    "api/index.ts": {
-      "includeFiles": "server/**"
-    }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/uploads/(.*)", "destination": "/api/index" },
-    { "source": "/downloads/(.*)", "destination": "/api/index" },
-    { "source": "/images/(.*)", "destination": "/api/index" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+﻿{
+    "functions":  {
+                      "api/index.ts":  {
+                                           "includeFiles":  "server/**"
+                                       }
+                  },
+    "version":  2,
+    "buildCommand":  "npm install --prefix client --no-audit --no-fund \u0026\u0026 npm run build --prefix client",
+    "alias":  [
+                  "dipeshthapa23.com.np",
+                  "www.dipeshthapa23.com.np"
+              ],
+    "outputDirectory":  "client/dist",
+    "rewrites":  [
+                     {
+                         "destination":  "/api/index",
+                         "source":  "/api/(.*)"
+                     },
+                     {
+                         "destination":  "/api/index",
+                         "source":  "/uploads/(.*)"
+                     },
+                     {
+                         "destination":  "/api/index",
+                         "source":  "/downloads/(.*)"
+                     },
+                     {
+                         "destination":  "/api/index",
+                         "source":  "/images/(.*)"
+                     },
+                     {
+                         "destination":  "/index.html",
+                         "source":  "/(.*)"
+                     }
+                 ]
 }

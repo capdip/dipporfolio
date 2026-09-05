@@ -12,7 +12,7 @@ const envSchema = z.object({
   MONGODB_URI: z.string().optional(),
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters').default('dev-secret-key-change-in-production-12345'),
   JWT_EXPIRES_IN: z.string().default('7d'),
-  FRONTEND_URL: z.string().default('http://localhost:5173'),
+  FRONTEND_URL: z.string().default('dipeshthapa23.com.np'),
   ADMIN_EMAIL: z.string().email().default('admin@dipeshthapa.local'),
   ADMIN_PASSWORD: z.string().min(8, 'ADMIN_PASSWORD must be at least 8 characters').default('ChangeMe!2026'),
   ADMIN_NAME: z.string().default('Site Administrator'),
