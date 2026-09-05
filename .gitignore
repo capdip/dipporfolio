@@ -7,3 +7,4 @@ dist/
 build/
 *.txt
 *.md
+client/.tmp
